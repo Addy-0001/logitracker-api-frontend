@@ -1,0 +1,21 @@
+/* Remove previous custom styles */
+/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Link Styles */
+a {
+    color: #720707;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #A00A0A;
+}
+
+
+

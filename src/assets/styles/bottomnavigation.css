@@ -1,0 +1,94 @@
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #FFFFFF;
+    border-top: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 0.5rem 0;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 8px;
+    min-width: 60px;
+}
+
+.nav-item:hover {
+    color: #720707;
+    background-color: rgba(114, 7, 7, 0.05);
+}
+
+.nav-item.active {
+    color: #720707;
+    background-color: rgba(114, 7, 7, 0.1);
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Active state indicator */
+.nav-item.active .nav-icon::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background-color: #720707;
+    border-radius: 50%;
+}
+
+.nav-icon {
+    position: relative;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .nav-label {
+        font-size: 0.7rem;
+    }
+
+    .nav-icon {
+        font-size: 1.1rem;
+    }
+
+    .nav-item {
+        min-width: 50px;
+        padding: 0.4rem;
+    }
+}
+
+/* Hide on larger screens where top navigation is preferred 
+@media (min-width: 768px) {
+    .bottom-navigation {
+        display: none;
+    }
+}
+    */
