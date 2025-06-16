@@ -92,7 +92,7 @@
   flex-grow: 1;
 }
 
-.nav-item {
+.profile-nav-item {
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
@@ -108,17 +108,17 @@
   font-size: 1rem;
 }
 
-.nav-item i {
+.profile-nav-item i {
   margin-right: 0.75rem;
   width: 20px;
   text-align: center;
 }
 
-.nav-item:hover {
+.profile-nav-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-item.active {
+.profile-nav-item.active {
   background-color: rgba(255, 255, 255, 0.2);
   font-weight: 600;
 }
@@ -137,6 +137,7 @@
   justify-content: center;
   transition: all 0.3s ease;
   font-size: 1rem;
+  margin-bottom: 150px;
 }
 
 .logout-button i {
@@ -356,12 +357,12 @@
   flex-shrink: 0;
 }
 
-.checkbox-container input[type="checkbox"]:checked + .checkmark {
+.checkbox-container input[type="checkbox"]:checked+.checkmark {
   background-color: #720707;
   border-color: #720707;
 }
 
-.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+.checkbox-container input[type="checkbox"]:checked+.checkmark::after {
   content: "";
   position: absolute;
   left: 5px;
@@ -464,6 +465,22 @@
     padding: 1.5rem;
   }
 
+  .logout-button {
+    margin-top: auto;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    margin-bottom: 15px;
+  }
+
   .profile-user {
     flex-direction: row;
     align-items: center;
@@ -484,13 +501,13 @@
     gap: 0.5rem;
   }
 
-  .nav-item {
+  .profile-nav-item {
     padding: 0.5rem 0.75rem;
     margin-bottom: 0;
     font-size: 0.9rem;
   }
 
-  .nav-item i {
+  .profile-nav-item i {
     margin-right: 0.5rem;
   }
 
@@ -529,17 +546,22 @@
   .section-header h2 {
     font-size: 1.25rem;
   }
+
+
 }
 
 /* Animation for form validation */
 @keyframes shake {
+
   0%,
   100% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-5px);
   }
+
   75% {
     transform: translateX(5px);
   }

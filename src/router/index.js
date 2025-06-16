@@ -76,7 +76,7 @@ router.beforeEach((to, from, next) => {
   }
   // Redirect authenticated admins away from login/register
   else if (['login', 'register'].includes(to.name) && authStore.isAuthenticated && authStore.getUser?.role === 'admin') {
-    next({ name: 'home' });
+    next({ name: 'profile' });
   }
   else {
     next();

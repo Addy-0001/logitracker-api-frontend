@@ -3,7 +3,8 @@
         <div class="profile-sidebar">
             <div class="profile-user">
                 <div class="profile-avatar">
-                    <img :src="user.avatar || '/default-avatar.png'" alt="User Avatar" />
+                    <img :src="user.avatar ? `${apiBaseUrl}${user.avatar}` : '/default-avatar.png'" alt="User Avatar"
+                        @error="user.avatar = null" />
                     <div class="avatar-upload">
                         <label for="avatar-input" class="avatar-edit">
                             <i class="fas fa-camera"></i>
@@ -18,16 +19,18 @@
 
             <div class="profile-nav">
                 <button v-for="section in sections" :key="section.id" @click="activeSection = section.id"
-                    :class="['nav-item', { active: activeSection === section.id }]">
+                    :class="['profile-nav-item', { active: activeSection === section.id }]">
                     <i :class="section.icon"></i>
                     {{ section.name }}
                 </button>
             </div>
 
-            <button @click="handleLogout" class="logout-button">
+            <spacer> </spacer>
+
+            <router-link to="/logout" class="logout-button">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout
-            </button>
+            </router-link>
         </div>
 
         <div class="profile-content">
@@ -330,10 +333,6 @@
                         <label for="language" class="form-label">Language</label>
                         <select id="language" v-model="preferences.language" class="form-input">
                             <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="zh">Chinese</option>
                         </select>
                     </div>
 
@@ -344,6 +343,13 @@
                             <option value="UTC-5">Eastern Time (UTC-5)</option>
                             <option value="UTC+0">Greenwich Mean Time (UTC+0)</option>
                             <option value="UTC+1">Central European Time (UTC+1)</option>
+                            <option value="UTC+2">Eastern European Time (UTC+2)</option>
+                            <option value="UTC+3">Moscow Time (UTC+3)</option>
+                            <option value="UTC+4">Gulf Standard Time (UTC+4)</option>
+                            <option value="UTC+5">Pakistan Standard Time (UTC+5)</option>
+                            <option value="UTC+5:30">India Standard Time (UTC+5:30)</option>
+                            <option value="UTC+5:45">Nepal Standard Time (UTC+5:45)</option>
+                            <option value="UTC+6">Bangladesh Standard Time (UTC+6)</option>
                             <option value="UTC+8">China Standard Time (UTC+8)</option>
                         </select>
                     </div>
@@ -379,6 +385,8 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import apiClient from '@/api/axios';
 import './profileview.css';
+
+const apiBaseUrl = import.meta.env.VUE_APP_API_BASE_URL || 'http://localhost:5000';
 
 // Reactive state
 const user = ref({
@@ -579,6 +587,8 @@ const fetchUserProfile = async () => {
     try {
         const response = await apiClient.get('/users/me');
         const userData = response.data;
+        console.log('User Profile Data:', userData);
+        console.log('Avatar URL:', userData.avatar);
 
         // Update reactive state
         user.value = {
@@ -644,6 +654,8 @@ const handleAvatarChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log('Selected File:', file);
+
     // Client-side validation
     if (!file.type.match('image.*')) {
         updateError.value = 'Please select an image file';
@@ -662,11 +674,13 @@ const handleAvatarChange = async (event) => {
     try {
         const formData = new FormData();
         formData.append('avatar', file);
+        console.log('Uploading avatar...');
 
         const response = await apiClient.post('/users/avatar', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
 
+        console.log('Upload Response:', response.data);
         user.value.avatar = response.data.avatar;
         authStore.setAuthData({
             token: authStore.token,
@@ -677,7 +691,7 @@ const handleAvatarChange = async (event) => {
         updateSuccess.value = 'Profile picture updated successfully';
     } catch (error) {
         updateError.value = error.response?.data?.message || 'Failed to update profile picture. Please try again.';
-        console.error('Avatar upload error:', error);
+        console.error('Avatar upload error:', error.response?.data || error);
     } finally {
         isLoading.value = false;
     }
@@ -830,10 +844,6 @@ const updatePreferences = async () => {
     }
 };
 
-const handleLogout = () => {
-    router.push('/logout');
-};
-
 // Fetch user data on mount and check admin role
 onMounted(async () => {
     if (authStore.isAuthenticated) {
@@ -849,4 +859,3 @@ onMounted(async () => {
     }
 });
 </script>
-
