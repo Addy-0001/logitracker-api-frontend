@@ -6,7 +6,7 @@ import Navbar from './components/Navbar.vue'
 <template>
   <div>
     <Navbar />
-    <div style="height: 80vh; margin-top: 70px;">
+    <div style="height: 100vh; margin-top: 70px;">
       <RouterView />
     </div>
     <BottomNavigation />

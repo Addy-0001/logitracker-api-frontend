@@ -25,8 +25,6 @@
                 </button>
             </div>
 
-            <spacer> </spacer>
-
             <router-link to="/logout" class="logout-button">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout

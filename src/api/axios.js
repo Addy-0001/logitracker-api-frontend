@@ -2,19 +2,21 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:5000/api/v1/',
+    baseURL: import.meta.env.VUE_APP_API_BASE_URL || 'http://localhost:5000/api/v1/',
+    // /withCredentials: true, // Optional: use this if you're setting HTTP-only cookies
 });
 
-// Add request interceptor to include JWT token
-apiClient.interceptors.request.use(
-    (config) => {
-        const authStore = useAuthStore();
-        if (authStore.token) {
-            config.headers.Authorization = `Bearer ${authStore.token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+apiClient.interceptors.request.use((config) => {
+    const authStore = useAuthStore();
+    const token = authStore.token;
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
 
 export default apiClient;
