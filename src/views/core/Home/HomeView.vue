@@ -543,7 +543,7 @@
                                         <option value="same-day">Same Day Delivery</option>
                                     </select>
                                     <span v-if="newJobErrors.jobType" class="error-message">{{ newJobErrors.jobType
-                                    }}</span>
+                                        }}</span>
                                 </div>
 
                                 <div class="form-group">
@@ -856,7 +856,12 @@ export default {
         },
         async fetchDrivers() {
             try {
-                const response = await apiClient.get('/users/drivers');
+                const response = await apiClient.get('/users/users', {
+                    params: {
+                        role: 'driver',
+                        status: 'active'
+                    }
+                });
                 this.availableDrivers = response.data;
             } catch (error) {
                 console.error('Error fetching drivers:', error);

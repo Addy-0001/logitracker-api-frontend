@@ -28,9 +28,9 @@ export default {
                     icon: 'fas fa-home'
                 },
                 {
-                    name: 'Shipments',
-                    path: '/shipments',
-                    icon: 'fas fa-box'
+                    name: 'Users',
+                    path: '/users',
+                    icon: 'fas fa-users'
                 },
                 {
                     name: 'Tracking',

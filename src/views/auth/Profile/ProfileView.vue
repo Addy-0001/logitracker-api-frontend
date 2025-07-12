@@ -32,6 +32,12 @@
         </div>
 
         <div class="profile-content">
+            <!-- Loading State -->
+            <div v-if="isLoading && !user.firstName" class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading profile...
+            </div>
+
             <div class="profile-header">
                 <h1>My Profile</h1>
                 <p>Manage your account information and settings</p>
@@ -382,9 +388,9 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import apiClient from '@/api/axios';
-import './profileview.css';
+// import './profileview.css';
 
-const apiBaseUrl = import.meta.env.VUE_APP_API_BASE_URL || 'http://localhost:5000';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Reactive state
 const user = ref({
@@ -443,7 +449,7 @@ const preferences = ref({
     showAnalytics: true,
     enableNotifications: false,
     language: 'en',
-    timezone: 'UTC-5',
+    timezone: 'UTC+5:45', // Default to Nepal Standard Time
 });
 
 const showCurrentPassword = ref(false);
@@ -463,17 +469,12 @@ const passwordStrength = computed(() => {
     if (!password) return 0;
 
     let strength = 0;
-
-    // Length check
     if (password.length >= 8) strength += 1;
     if (password.length >= 12) strength += 1;
-
-    // Character variety checks
     if (/[a-z]/.test(password)) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
-
     return Math.min(strength, 5);
 });
 
@@ -512,55 +513,44 @@ const isValidUrl = (url) => {
 
 const validatePersonalInfo = () => {
     errors.value = {};
-
     if (!personalInfo.value.firstName.trim()) {
         errors.value.firstName = 'First name is required';
     } else if (personalInfo.value.firstName.trim().length < 2) {
         errors.value.firstName = 'First name must be at least 2 characters';
     }
-
     if (!personalInfo.value.lastName.trim()) {
         errors.value.lastName = 'Last name is required';
     } else if (personalInfo.value.lastName.trim().length < 2) {
         errors.value.lastName = 'Last name must be at least 2 characters';
     }
-
     if (personalInfo.value.phone && !isValidPhone(personalInfo.value.phone)) {
         errors.value.phone = 'Please enter a valid phone number';
     }
-
     return Object.keys(errors.value).length === 0;
 };
 
 const validateCompanyInfo = () => {
     errors.value = {};
-
     if (!companyInfo.value.name.trim()) {
         errors.value.companyName = 'Company name is required';
     }
-
     if (!companyInfo.value.industry) {
         errors.value.industry = 'Please select an industry';
     }
-
     if (!companyInfo.value.size) {
         errors.value.size = 'Please select company size';
     }
-
     if (companyInfo.value.website && !isValidUrl(companyInfo.value.website)) {
         errors.value.website = 'Please enter a valid website URL';
     }
-
     return Object.keys(errors.value).length === 0;
 };
 
 const validatePasswordData = () => {
     errors.value = {};
-
     if (!passwordData.value.currentPassword) {
         errors.value.currentPassword = 'Current password is required';
     }
-
     if (!passwordData.value.newPassword) {
         errors.value.newPassword = 'New password is required';
     } else if (passwordData.value.newPassword.length < 8) {
@@ -568,13 +558,11 @@ const validatePasswordData = () => {
     } else if (passwordStrength.value < 3) {
         errors.value.newPassword = 'Password is too weak. Use a mix of letters, numbers, and symbols';
     }
-
     if (!passwordData.value.confirmPassword) {
         errors.value.confirmPassword = 'Please confirm your new password';
     } else if (passwordData.value.newPassword !== passwordData.value.confirmPassword) {
         errors.value.confirmPassword = 'Passwords do not match';
     }
-
     return Object.keys(errors.value).length === 0;
 };
 
@@ -584,11 +572,11 @@ const fetchUserProfile = async () => {
 
     try {
         const response = await apiClient.get('/users/me');
-        const userData = response.data;
+        const userData = response.data || {};
         console.log('User Profile Data:', userData);
         console.log('Avatar URL:', userData.avatar);
 
-        // Update reactive state
+        // Update reactive state with fallback values
         user.value = {
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
@@ -601,11 +589,10 @@ const fetchUserProfile = async () => {
             size: userData.size || '',
             website: userData.website || '',
             address: userData.address || '',
-            preferences: userData.preferences || preferences.value,
+            preferences: userData.preferences || {},
             role: userData.role || '',
         };
 
-        // Sync form data
         personalInfo.value = {
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
@@ -631,7 +618,7 @@ const fetchUserProfile = async () => {
             showAnalytics: userData.preferences?.showAnalytics ?? true,
             enableNotifications: userData.preferences?.enableNotifications ?? false,
             language: userData.preferences?.language ?? 'en',
-            timezone: userData.preferences?.timezone ?? 'UTC-5',
+            timezone: userData.preferences?.timezone ?? 'UTC+5:45',
         };
 
         // Update auth store
@@ -641,8 +628,24 @@ const fetchUserProfile = async () => {
             rememberMe: !!localStorage.getItem('authToken'),
         });
     } catch (error) {
-        updateError.value = error.response?.data?.message || 'Failed to fetch profile data. Please try again.';
-        console.error('Fetch profile error:', error);
+        console.error('Fetch profile error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            headers: error.response?.headers,
+        });
+
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            updateError.value = 'Session expired. Please log in again.';
+            authStore.logout();
+            router.push('/login');
+        } else if (error.response?.status === 404) {
+            updateError.value = 'User profile not found.';
+        } else if (!error.response) {
+            updateError.value = 'Network error. Please check your connection and try again.';
+        } else {
+            updateError.value = error.response?.data?.message || 'Failed to fetch profile data. Please try again.';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -653,8 +656,6 @@ const handleAvatarChange = async (event) => {
     if (!file) return;
 
     console.log('Selected File:', file);
-
-    // Client-side validation
     if (!file.type.match('image.*')) {
         updateError.value = 'Please select an image file';
         return;
@@ -688,8 +689,12 @@ const handleAvatarChange = async (event) => {
 
         updateSuccess.value = 'Profile picture updated successfully';
     } catch (error) {
+        console.error('Avatar upload error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
         updateError.value = error.response?.data?.message || 'Failed to update profile picture. Please try again.';
-        console.error('Avatar upload error:', error.response?.data || error);
     } finally {
         isLoading.value = false;
     }
@@ -710,13 +715,11 @@ const updatePersonalInfo = async () => {
             position: personalInfo.value.position,
         });
 
-        // Update reactive state
         user.value.firstName = personalInfo.value.firstName;
         user.value.lastName = personalInfo.value.lastName;
         user.value.phone = personalInfo.value.phone;
         user.value.position = personalInfo.value.position;
 
-        // Update auth store
         authStore.setAuthData({
             token: authStore.token,
             user: { ...authStore.getUser, ...response.data },
@@ -725,13 +728,17 @@ const updatePersonalInfo = async () => {
 
         updateSuccess.value = 'Personal information updated successfully';
     } catch (error) {
+        console.error('Update personal info error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
         updateError.value = error.response?.data?.message || 'Failed to update personal information. Please try again.';
         if (error.response?.data?.errors) {
             error.response.data.errors.forEach((err) => {
                 errors.value[err.param] = err.msg;
             });
         }
-        console.error('Update personal info error:', error);
     } finally {
         isLoading.value = false;
     }
@@ -753,14 +760,12 @@ const updateCompanyInfo = async () => {
             address: companyInfo.value.address,
         });
 
-        // Update reactive state
         user.value.company = companyInfo.value.name;
         user.value.industry = companyInfo.value.industry;
         user.value.size = companyInfo.value.size;
         user.value.website = companyInfo.value.website;
         user.value.address = companyInfo.value.address;
 
-        // Update auth store
         authStore.setAuthData({
             token: authStore.token,
             user: { ...authStore.getUser, ...response.data },
@@ -769,13 +774,17 @@ const updateCompanyInfo = async () => {
 
         updateSuccess.value = 'Company information updated successfully';
     } catch (error) {
+        console.error('Update company info error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
         updateError.value = error.response?.data?.message || 'Failed to update company information. Please try again.';
         if (error.response?.data?.errors) {
             error.response.data.errors.forEach((err) => {
                 errors.value[err.param] = err.msg;
             });
         }
-        console.error('Update company info error:', error);
     } finally {
         isLoading.value = false;
     }
@@ -789,7 +798,7 @@ const updatePassword = async () => {
     updateSuccess.value = '';
 
     try {
-        await apiClient.patch('/auth/change-password', {
+        await apiClient.patch('users/auth/change-password', {
             currentPassword: passwordData.value.currentPassword,
             newPassword: passwordData.value.newPassword,
         });
@@ -801,13 +810,17 @@ const updatePassword = async () => {
             confirmPassword: '',
         };
     } catch (error) {
+        console.error('Update password error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
         updateError.value = error.response?.data?.message || 'Failed to update password. Please try again.';
         if (error.response?.data?.errors) {
             error.response.data.errors.forEach((err) => {
                 errors.value[err.param] = err.msg;
             });
         }
-        console.error('Update password error:', error);
     } finally {
         isLoading.value = false;
     }
@@ -823,10 +836,7 @@ const updatePreferences = async () => {
             preferences: preferences.value,
         });
 
-        // Update reactive state
         user.value.preferences = preferences.value;
-
-        // Update auth store
         authStore.setAuthData({
             token: authStore.token,
             user: { ...authStore.getUser, ...response.data },
@@ -835,25 +845,44 @@ const updatePreferences = async () => {
 
         updateSuccess.value = 'Preferences updated successfully';
     } catch (error) {
+        console.error('Update preferences error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
         updateError.value = error.response?.data?.message || 'Failed to update preferences. Please try again.';
-        console.error('Update preferences error:', error);
     } finally {
         isLoading.value = false;
     }
 };
 
-// Fetch user data on mount and check admin role
+// Fetch user data on mount
 onMounted(async () => {
-    if (authStore.isAuthenticated) {
-        const user = authStore.getUser;
-        if (user && user.role === 'admin') {
-            await fetchUserProfile();
-        } else {
-            authStore.logout();
-            router.push('/login');
-        }
-    } else {
+    if (!authStore.isAuthenticated) {
+        updateError.value = 'Please log in to view your profile.';
         router.push('/login');
+        return;
     }
+    await fetchUserProfile();
 });
 </script>
+
+<style scoped>
+/* import profileview.css */
+@import "./profileview.css";
+
+
+.loading-state {
+    text-align: center;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.loading-state i {
+    font-size: 24px;
+    margin-right: 10px;
+}
+</style>
