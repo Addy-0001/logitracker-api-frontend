@@ -44,17 +44,6 @@
                         <span class="stat-trend positive">+{{ userStats.driversChange }}%</span>
                     </div>
                 </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon active">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>{{ userStats.active }}</h3>
-                        <p>Active Users</p>
-                        <span class="stat-trend positive">+{{ userStats.activeChange }}%</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -69,46 +58,6 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-            </div>
-
-            <div class="filters-container">
-                <div class="filter-group">
-                    <label>Role:</label>
-                    <select v-model="selectedRole" class="filter-select" @change="fetchUsers">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="driver">Driver</option>
-                        <option value="dispatcher">Dispatcher</option>
-                        <option value="customer">Customer</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label>Status:</label>
-                    <select v-model="selectedStatus" class="filter-select" @change="fetchUsers">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="pending">Pending</option>
-                        <option value="suspended">Suspended</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label>Department:</label>
-                    <select v-model="selectedDepartment" class="filter-select" @change="fetchUsers">
-                        <option value="">All Departments</option>
-                        <option value="operations">Operations</option>
-                        <option value="logistics">Logistics</option>
-                        <option value="customer-service">Customer Service</option>
-                        <option value="management">Management</option>
-                    </select>
-                </div>
-
-                <button @click="clearFilters" class="clear-filters-btn">
-                    <i class="fas fa-filter"></i>
-                    Clear Filters
-                </button>
             </div>
 
             <div class="view-actions">

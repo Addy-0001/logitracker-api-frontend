@@ -1,291 +1,542 @@
-/* Tracking Container */
-.tracking-container {
-    height: 100vh;
+/* Route Visualization Styles */
+.route-visualization {
     display: flex;
     flex-direction: column;
+    height: 100vh;
     background-color: #f8f9fa;
-    overflow: hidden;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Header Section */
-.tracking-header {
-    background-color: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    z-index: 100;
+.route-header {
+    background: linear-gradient(135deg, #720707 0%, #8b0000 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    max-width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .header-title h1 {
-    font-size: 1.5rem;
-    color: #333;
-    margin: 0 0 0.25rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
 }
 
 .header-title p {
-    color: #666;
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.job-search {
-    position: relative;
-}
-
-.search-input-wrapper {
-    display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: border-color 0.3s ease;
-}
-
-.search-input-wrapper:focus-within {
-    border-color: #720707;
-    box-shadow: 0 0 0 3px rgba(114, 7, 7, 0.1);
-}
-
-.search-input-wrapper i {
-    padding: 0 1rem;
-    color: #666;
-}
-
-.search-input {
-    border: none;
-    outline: none;
-    padding: 0.75rem 0;
     font-size: 1rem;
-    min-width: 250px;
-    background: transparent;
+    opacity: 0.9;
+    margin: 0;
 }
 
-.search-input::placeholder {
-    color: #999;
+.header-actions {
+    display: flex;
+    gap: 1rem;
 }
 
-.search-btn {
-    background-color: #720707;
-    color: #ffffff;
-    border: none;
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    transition: background-color 0.3s ease;
-}
-
-.search-btn:hover {
-    background-color: #5a0606;
-}
-
-.view-controls {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.auto-refresh-btn,
-.refresh-btn {
-    padding: 0.75rem 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    color: #666;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
-.auto-refresh-btn:hover,
-.refresh-btn:hover:not(:disabled) {
-    background-color: #f8f9fa;
-    border-color: #720707;
-    color: #720707;
+.action-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
 }
 
-.auto-refresh-btn.active {
-    background-color: #720707;
-    color: #ffffff;
-    border-color: #720707;
-}
-
-.refresh-btn:disabled {
-    opacity: 0.6;
+.action-btn:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Main Content */
-.tracking-content {
-    flex: 1;
+.route-content {
     display: flex;
-    overflow: hidden;
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 1.5rem;
+    padding: 1.5rem;
 }
 
-/* Job Selection Panel */
-.job-selection-panel {
-    flex: 1;
+/* Control Panel */
+.control-panel {
+    width: 400px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    height: fit-content;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.panel-section {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.panel-section:last-child {
+    border-bottom: none;
+}
+
+.panel-section h3 {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 1.5rem 0;
 }
 
-.selection-content {
-    text-align: center;
-    max-width: 800px;
-    width: 100%;
-}
-
-.selection-icon {
-    font-size: 4rem;
+.panel-section h3 i {
     color: #720707;
-    margin-bottom: 1.5rem;
 }
 
-.selection-content h2 {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 1rem;
-}
-
-.selection-content p {
-    color: #666;
-    font-size: 1.1rem;
-    margin-bottom: 3rem;
-}
-
-.active-jobs-list h3 {
-    color: #333;
-    margin-bottom: 1.5rem;
-    text-align: left;
-}
-
-.jobs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+/* Route Form */
+.route-form {
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
 }
 
-.job-card {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: left;
+.input-group {
+    position: relative;
 }
 
-.job-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+.input-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.start-icon {
+    color: #28a745;
+}
+
+.end-icon {
+    color: #dc3545;
+}
+
+.location-input {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.location-field {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.location-field:focus {
+    outline: none;
     border-color: #720707;
 }
 
-.job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+.search-btn,
+.location-btn {
+    padding: 0.75rem;
+    border: 2px solid #720707;
+    border-radius: 8px;
+    background: #720707;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.job-id {
-    font-weight: 700;
+.location-btn {
+    background: transparent;
     color: #720707;
-    font-size: 1.1rem;
 }
 
-.job-status {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
+.search-btn:hover:not(:disabled),
+.location-btn:hover {
+    background: #8b0000;
+    border-color: #8b0000;
 }
 
-.job-status.in-transit {
-    background-color: #d1ecf1;
-    color: #0c5460;
+.location-btn:hover {
+    background: #720707;
+    color: white;
 }
 
-.job-status.delayed {
-    background-color: #f8d7da;
-    color: #721c24;
+.search-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.job-route {
+/* Suggestions */
+.suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
     display: flex;
     align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item i {
+    color: #720707;
+}
+
+.suggestion-text {
+    flex: 1;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.suggestion-address {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Route Options */
+.route-options h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 1rem 0;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
     margin-bottom: 1rem;
 }
 
-.route-point {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #666;
+.option-item label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
 }
 
-.route-point i.origin {
+.option-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.option-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.toggle-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.toggle-option input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-slider {
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 20px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.toggle-slider::before {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+}
+
+.toggle-option input[type="checkbox"]:checked+.toggle-slider {
+    background: #720707;
+}
+
+.toggle-option input[type="checkbox"]:checked+.toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* Calculate Button */
+.calculate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #720707 0%, #8b0000 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calculate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(114, 7, 7, 0.3);
+}
+
+.calculate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Route Information */
+.route-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    background: #720707;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Route Instructions */
+.route-instructions h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 1rem 0;
+}
+
+.instructions-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.instruction-item:hover {
+    background-color: #f8f9fa;
+}
+
+.instruction-item.active {
+    background-color: #720707;
+    color: white;
+}
+
+.instruction-icon {
+    width: 30px;
+    height: 30px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #720707;
+}
+
+.instruction-item.active .instruction-icon {
+    background: white;
+}
+
+.instruction-content {
+    flex: 1;
+}
+
+.instruction-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.instruction-distance {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Alternative Routes */
+.alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.alternative-item {
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.alternative-item:hover {
+    border-color: #720707;
+}
+
+.alternative-item.selected {
+    border-color: #720707;
+    background-color: #f8f9fa;
+}
+
+.alternative-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.route-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.route-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.route-badge.scenic {
+    background: #d4edda;
+    color: #155724;
+}
+
+.route-badge.alternative {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.alternative-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.alt-distance,
+.alt-duration {
+    color: #6c757d;
+}
+
+.alt-difference.faster {
     color: #28a745;
 }
 
-.route-point i.destination {
+.alt-difference.slower {
     color: #dc3545;
 }
 
-.route-arrow {
-    color: #999;
-}
-
-.job-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* Tracking Interface */
-.tracking-interface {
-    flex: 1;
-    display: flex;
-    height: 100%;
-}
-
-/* Map Section */
-.map-section {
+/* Map Container */
+.map-container {
     flex: 1;
     position: relative;
-    background-color: #e0e0e0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.map-container {
-    width: 500px;
+.map {
+    width: 100%;
     height: 100%;
-    z-index: 1;
+    min-height: 500px;
 }
 
+/* Map Controls */
 .map-controls {
     position: absolute;
     top: 1rem;
@@ -296,485 +547,145 @@
     z-index: 1000;
 }
 
-.map-control-btn {
+.map-control {
     width: 40px;
     height: 40px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: white;
+    border: none;
     border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #2c3e50;
     transition: all 0.3s ease;
-    color: #666;
 }
 
-.map-control-btn:hover {
-    background-color: #720707;
-    color: #ffffff;
+.map-control:hover {
+    background: #720707;
+    color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.map-control.active {
+    background: #720707;
+    color: white;
+}
+
+/* Map Legend */
 .map-legend {
     position: absolute;
     bottom: 1rem;
     left: 1rem;
-    background-color: rgba(255, 255, 255, 0.95);
+    background: white;
     padding: 1rem;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     z-index: 1000;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    color: #333;
-}
-
-.legend-item:last-child {
-    margin-bottom: 0;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
 }
 
 .legend-marker {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.legend-marker.pickup {
-    background-color: #28a745;
+.legend-marker.start {
+    background: #28a745;
 }
 
-.legend-marker.delivery {
-    background-color: #dc3545;
+.legend-marker.end {
+    background: #dc3545;
 }
 
 .legend-marker.vehicle {
-    background-color: #720707;
+    background: #720707;
 }
 
-/* Job Information Panel */
-.job-info-panel {
-    width: 400px;
-    background-color: #ffffff;
-    border-left: 1px solid #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.legend-line {
+    width: 20px;
+    height: 3px;
 }
 
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
-    background-color: #f8f9fa;
+.legend-line.main {
+    background: #720707;
 }
 
-.job-title h2 {
-    font-size: 1.25rem;
-    color: #333;
-    margin: 0 0 0.5rem 0;
+.legend-line.alternative {
+    background: #6c757d;
+    background-image: repeating-linear-gradient(90deg, transparent, transparent 3px, #6c757d 3px, #6c757d 6px);
 }
 
-.status-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.status-badge.in-transit {
-    background-color: #d1ecf1;
-    color: #0c5460;
-}
-
-.status-badge.delayed {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    color: #666;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-    background-color: #e9ecef;
-    color: #333;
-}
-
-.panel-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0;
-}
-
-/* Panel Sections */
-.progress-section,
-.driver-section,
-.route-section,
-.customer-section,
-.updates-section,
-.actions-section {
-    padding: 1.5rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.progress-section h3,
-.driver-section h3,
-.route-section h3,
-.customer-section h3,
-.updates-section h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    color: #333;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.progress-section h3 i,
-.driver-section h3 i,
-.route-section h3 i,
-.customer-section h3 i,
-.updates-section h3 i {
-    color: #720707;
-    width: 16px;
-    text-align: center;
-}
-
-/* Progress Section */
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: #e0e0e0;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 0.75rem;
-}
-
-.progress-fill {
-    height: 100%;
-    background-color: #720707;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-.progress-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* Driver Section */
-.driver-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-.driver-avatar {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.driver-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.online-indicator {
+/* Map Loading */
+.map-loading {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 12px;
-    height: 12px;
-    background-color: #28a745;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-}
-
-.driver-details {
-    flex: 1;
-}
-
-.driver-details h4 {
-    margin: 0 0 0.25rem 0;
-    color: #333;
-    font-size: 1rem;
-}
-
-.driver-details p {
-    margin: 0 0 0.5rem 0;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.driver-stats {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.85rem;
-}
-
-.rating {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    color: #ffc107;
-}
-
-.vehicle {
-    color: #666;
-}
-
-.driver-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.action-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    z-index: 2000;
 }
 
-.action-btn.call {
-    background-color: #28a745;
-    color: #ffffff;
+.loading-content {
+    text-align: center;
+    color: #720707;
 }
 
-.action-btn.message {
-    background-color: #17a2b8;
-    color: #ffffff;
+.loading-content i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
 }
 
-.action-btn.email {
-    background-color: #6c757d;
-    color: #ffffff;
+.loading-content p {
+    font-size: 1rem;
+    font-weight: 500;
 }
 
-.action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Route Timeline */
-.route-timeline {
-    position: relative;
-}
-
-.timeline-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-}
-
-.timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 30px;
-    bottom: -15px;
-    width: 2px;
-    background-color: #e0e0e0;
-}
-
-.timeline-item:last-child::before {
-    display: none;
-}
-
-.timeline-marker {
+/* Custom Markers */
+.custom-marker {
     width: 30px;
     height: 30px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    z-index: 1;
-    position: relative;
-}
-
-.timeline-item.completed .timeline-marker {
-    background-color: #28a745;
-    color: #ffffff;
-}
-
-.timeline-item.active .timeline-marker {
-    background-color: #720707;
-    color: #ffffff;
-}
-
-.timeline-item.pending .timeline-marker {
-    background-color: #e0e0e0;
-    color: #666;
-}
-
-.timeline-content h4 {
-    margin: 0 0 0.25rem 0;
-    color: #333;
-    font-size: 0.95rem;
-}
-
-.timeline-content p {
-    margin: 0 0 0.25rem 0;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.timestamp {
-    font-size: 0.8rem;
-    color: #999;
-}
-
-/* Customer Section */
-.customer-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-.customer-details {
-    flex: 1;
-}
-
-.customer-details h4 {
-    margin: 0 0 0.25rem 0;
-    color: #333;
-    font-size: 1rem;
-}
-
-.customer-details p {
-    margin: 0 0 0.25rem 0;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.customer-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-/* Updates Section */
-.updates-list {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.update-item {
-    display: flex;
-    gap: 1rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.update-item:last-child {
-    border-bottom: none;
-}
-
-.update-time {
-    font-size: 0.8rem;
-    color: #999;
-    min-width: 60px;
-    flex-shrink: 0;
-}
-
-.update-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.update-content i {
-    color: #720707;
-    width: 16px;
-    text-align: center;
-}
-
-/* Actions Section */
-.actions-section {
-    border-bottom: none;
-}
-
-.action-button {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    color: #666;
+    font-size: 16px;
+    border: 3px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-    transition: all 0.3s ease;
 }
 
-.action-button:last-child {
-    margin-bottom: 0;
+.custom-marker.start {
+    background: #28a745;
 }
 
-.action-button:hover {
-    background-color: #f8f9fa;
-    border-color: #720707;
-    color: #720707;
-}
-
-.action-button i {
-    width: 16px;
-    text-align: center;
+.custom-marker.end {
+    background: #dc3545;
 }
 
 /* Error Modal */
@@ -784,20 +695,21 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: 3000;
 }
 
 .error-content {
-    background-color: #ffffff;
-    border-radius: 12px;
+    background: white;
     padding: 2rem;
-    max-width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 90%;
 }
 
 .error-icon {
@@ -807,97 +719,67 @@
 }
 
 .error-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
     margin: 0 0 1rem 0;
-    color: #333;
 }
 
 .error-content p {
-    margin: 0 0 2rem 0;
-    color: #666;
+    color: #6c757d;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
 }
 
-.error-close-btn {
+.error-close {
     padding: 0.75rem 1.5rem;
-    background-color: #720707;
-    color: #ffffff;
+    background: #720707;
+    color: white;
     border: none;
     border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
-    font-weight: 600;
+    transition: background-color 0.3s ease;
 }
 
-.error-close-btn:hover {
-    background-color: #5a0606;
+.error-close:hover {
+    background: #8b0000;
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-    .job-info-panel {
-        width: 350px;
-    }
-}
-
-@media (max-width: 992px) {
-    .header-content {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-
-    .header-controls {
-        justify-content: space-between;
-    }
-
-    .search-input {
-        min-width: 200px;
-    }
-
-    .tracking-interface {
+    .route-content {
         flex-direction: column;
     }
 
-    .job-info-panel {
+    .control-panel {
         width: 100%;
-        height: 300px;
-        border-left: none;
-        border-top: 1px solid #e0e0e0;
+        max-height: none;
     }
 
-    .map-section {
-        height: calc(100vh - 200px);
+    .map-container {
+        height: 500px;
     }
 }
 
 @media (max-width: 768px) {
     .header-content {
-        padding: 1rem;
-    }
-
-    .header-controls {
         flex-direction: column;
         gap: 1rem;
+        text-align: center;
     }
 
-    .view-controls {
+    .header-actions {
         justify-content: center;
     }
 
-    .search-input {
-        min-width: 150px;
+    .route-content {
+        padding: 1rem;
+        gap: 1rem;
     }
 
-    .jobs-grid {
+    .options-grid {
         grid-template-columns: 1fr;
-    }
-
-    .job-route {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .route-arrow {
-        transform: rotate(90deg);
     }
 
     .map-controls {
@@ -905,103 +787,35 @@
         top: auto;
         bottom: 1rem;
         right: 1rem;
+        left: 1rem;
+        justify-content: center;
     }
 
     .map-legend {
-        bottom: 4rem;
-    }
-
-    .driver-card,
-    .customer-card {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .driver-actions,
-    .customer-actions {
-        flex-direction: row;
-        justify-content: center;
+        position: relative;
+        margin: 1rem;
     }
 }
 
-@media (max-width: 576px) {
-    .header-content {
-        padding: 0.75rem;
-    }
-
-    .header-title h1 {
-        font-size: 1.25rem;
-    }
-
-    .search-input-wrapper {
-        flex-direction: column;
-    }
-
-    .search-input {
-        min-width: auto;
-        width: 100%;
-        padding: 0.75rem 1rem;
-    }
-
-    .search-btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .map-controls {
-        gap: 0.25rem;
-    }
-
-    .map-control-btn {
-        width: 36px;
-        height: 36px;
-    }
-
-    .panel-content {
-        padding: 0;
-    }
-
-    .progress-section,
-    .driver-section,
-    .route-section,
-    .customer-section,
-    .updates-section,
-    .actions-section {
-        padding: 1rem;
-    }
+/* Scrollbar Styling */
+.control-panel::-webkit-scrollbar,
+.instructions-list::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Animation for real-time updates */
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
+.control-panel::-webkit-scrollbar-track,
+.instructions-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
 }
 
-.online-indicator {
-    animation: pulse 2s infinite;
+.control-panel::-webkit-scrollbar-thumb,
+.instructions-list::-webkit-scrollbar-thumb {
+    background: #720707;
+    border-radius: 3px;
 }
 
-/* Smooth transitions */
-.progress-fill,
-.timeline-marker,
-.status-badge {
-    transition: all 0.3s ease;
-}
-
-/* Focus states for accessibility */
-.search-input:focus,
-.map-control-btn:focus,
-.action-btn:focus,
-.action-button:focus {
-    outline: 2px solid #720707;
-    outline-offset: 2px;
+.control-panel::-webkit-scrollbar-thumb:hover,
+.instructions-list::-webkit-scrollbar-thumb:hover {
+    background: #8b0000;
 }

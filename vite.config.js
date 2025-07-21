@@ -1,10 +1,8 @@
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import vueDevTools from 'vite-plugin-vue-devtools';
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -12,7 +10,13 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Use the package's main entry point instead of a specific file
+      '@maptiler/sdk': '@maptiler/sdk',
+      'leaflet': fileURLToPath(new URL('./node_modules/leaflet/dist/leaflet.js', import.meta.url)),
     },
   },
-})
+  optimizeDeps: {
+    include: ['@maptiler/sdk', 'leaflet'],
+  },
+});
