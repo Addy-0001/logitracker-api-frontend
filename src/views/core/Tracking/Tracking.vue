@@ -21,7 +21,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="route-content">
+        <div class="route-content" style="padding-bottom: 100px; margin-bottom: 100px;">
             <!-- Control Panel -->
             <div class="control-panel">
                 <div class="panel-section">
@@ -97,15 +97,6 @@
                             <h4>Route Preferences</h4>
                             <div class="options-grid">
                                 <div class="option-item">
-                                    <label for="route-profile">Vehicle Type</label>
-                                    <select id="route-profile" v-model="routeProfile" class="option-select">
-                                        <option value="driving-car">Car</option>
-                                        <option value="driving-hgv">Truck</option>
-                                        <option value="cycling-regular">Bicycle</option>
-                                        <option value="foot-walking">Walking</option>
-                                    </select>
-                                </div>
-                                <div class="option-item">
                                     <label for="route-preference">Optimize For</label>
                                     <select id="route-preference" v-model="routePreference" class="option-select">
                                         <option value="fastest">Fastest Route</option>
@@ -113,18 +104,6 @@
                                         <option value="recommended">Recommended</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="option-toggles">
-                                <label class="toggle-option">
-                                    <input type="checkbox" v-model="avoidTolls" />
-                                    <span class="toggle-slider"></span>
-                                    Avoid Tolls
-                                </label>
-                                <label class="toggle-option">
-                                    <input type="checkbox" v-model="avoidHighways" />
-                                    <span class="toggle-slider"></span>
-                                    Avoid Highways
-                                </label>
                             </div>
                         </div>
 
@@ -176,23 +155,6 @@
                         </div>
                     </div>
 
-                    <!-- Route Instructions -->
-                    <div class="route-instructions">
-                        <h4>Turn-by-Turn Directions</h4>
-                        <div class="instructions-list">
-                            <div v-for="(instruction, index) in currentRoute.instructions" :key="index"
-                                class="instruction-item" @click="highlightInstruction(index)"
-                                :class="{ active: highlightedInstruction === index }">
-                                <div class="instruction-icon">
-                                    <i :class="getInstructionIcon(instruction.type)"></i>
-                                </div>
-                                <div class="instruction-content">
-                                    <div class="instruction-text">{{ instruction.text }}</div>
-                                    <div class="instruction-distance">{{ formatDistance(instruction.distance) }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Alternative Routes -->
@@ -291,12 +253,6 @@
 </template>
 
 <script>
-// Remove these lines:
-// import { Map } from '@maptiler/sdk'
-// import maplibregl from 'maplibre-gl'
-// import '@maptiler/sdk/dist/maptiler-sdk.css'
-
-// Replace with:
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -322,8 +278,7 @@ export default {
             // Route options
             routeProfile: 'driving-car',
             routePreference: 'fastest',
-            avoidTolls: false,
-            avoidHighways: false,
+
 
             // Route data
             currentRoute: null,
@@ -369,21 +324,27 @@ export default {
     methods: {
         async initializeMap() {
             try {
-                // Initialize MapLibre GL map with MapTiler style
                 this.map = new maplibregl.Map({
                     container: 'route-map',
                     style: `https://api.maptiler.com/maps/${this.mapStyle}/style.json?key=${this.mapTilerKey}`,
-                    center: [-98.5795, 39.8283], // Center of USA
-                    zoom: 4,
-                    attributionControl: true
+                    center: [84.1240, 28.3949], // Center Nepal, reordered [lng, lat]
+                    zoom: 7,
+                    attributionControl: true,
+                    maxBounds: [
+                        [80.058, 26.347],
+                        [88.2015, 30.447]
+                    ]
                 })
 
-                // Add map click handler for setting waypoints
                 this.map.on('click', this.onMapClick)
 
-                // Add map load handler
                 this.map.on('load', () => {
                     console.log('Map loaded successfully')
+                    this.map.addControl(new maplibregl.NavigationControl(), 'top-right')
+                })
+
+                this.map.on('error', (e) => {
+                    console.error('Maplibre error:', e.error)
                 })
 
             } catch (error) {
@@ -524,9 +485,6 @@ export default {
                         weight_factor: 1.4
                     }
                 }
-
-                if (this.avoidTolls) requestBody.options.avoid_features.push('tollways')
-                if (this.avoidHighways) requestBody.options.avoid_features.push('highways')
 
                 const response = await fetch(
                     `https://api.openrouteservice.org/v2/directions/${this.routeProfile}/geojson`,
@@ -781,8 +739,6 @@ export default {
                 options: {
                     profile: this.routeProfile,
                     preference: this.routePreference,
-                    avoidTolls: this.avoidTolls,
-                    avoidHighways: this.avoidHighways
                 },
                 exportedAt: new Date().toISOString()
             }
