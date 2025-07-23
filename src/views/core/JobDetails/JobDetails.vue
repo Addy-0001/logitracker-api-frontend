@@ -23,7 +23,7 @@
                             <i class="fas fa-arrow-left"></i>
                             Back to Dashboard
                         </button>
-                        <div class="job-title">
+                        <div class="job-title" style="color: black;;">
                             <h1>Live Tracking - Job #{{ job.id }}</h1>
                             <p>Real-time location and status updates</p>
                         </div>
@@ -58,31 +58,6 @@
                         <button @click="toggleMapStyle" class="map-control" title="Toggle Map Style">
                             <i class="fas fa-layer-group"></i>
                         </button>
-                    </div>
-
-                    <!-- Live Stats Overlay -->
-                    <div class="live-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <div class="stat-content">
-                                <div class="stat-value">{{ job.currentSpeed || 0 }} km/h</div>
-                                <div class="stat-label">Current Speed</div>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-road"></i>
-                            <div class="stat-content">
-                                <div class="stat-value">{{ job.distance || 0 }} km</div>
-                                <div class="stat-label">Total Distance</div>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-clock"></i>
-                            <div class="stat-content">
-                                <div class="stat-value">{{ job.estimatedTime || 0 }} min</div>
-                                <div class="stat-label">ETA</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -665,13 +640,13 @@ export default {
 /* Main Container */
 .job-tracking-container {
     min-height: 100vh;
-    background-color: #f8f9fa;
+    /* background-color: #f8f9fa; */
 }
 
 /* Header */
 .tracking-header {
     background: linear-gradient(135deg, #720707 0%, #8b0000 100%);
-    color: white;
+    /* color: white; */
     padding: 1.5rem 2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -698,7 +673,7 @@ export default {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: white;
+    /* color: white; */
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -760,7 +735,7 @@ export default {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: white;
+    /* color: white; */
     cursor: pointer;
     transition: all 0.3s ease;
 }

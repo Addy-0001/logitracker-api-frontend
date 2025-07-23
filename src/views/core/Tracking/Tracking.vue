@@ -143,16 +143,6 @@
                                 <div class="stat-label">Estimated Time</div>
                             </div>
                         </div>
-
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-gas-pump"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">{{ calculateFuelCost(currentRoute.distance) }}</div>
-                                <div class="stat-label">Fuel Cost</div>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
@@ -783,13 +773,6 @@ export default {
             } else {
                 return `${minutes}m`
             }
-        },
-
-        calculateFuelCost(distance) {
-            const fuelEfficiency = 8 // L/100km
-            const fuelPrice = 1.5 // per liter
-            const cost = (distance / 1000) * (fuelEfficiency / 100) * fuelPrice
-            return `$${cost.toFixed(2)}`
         },
 
         getInstructionIcon(type) {
