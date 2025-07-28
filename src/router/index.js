@@ -7,6 +7,7 @@ import Shipment from '@/views/core/User/User.vue';
 import Tracking from '@/views/core/Tracking/Tracking.vue';
 import { useAuthStore } from '@/stores/auth';
 import JobDetails from '@/views/core/JobDetails/JobDetails.vue';
+import CreateJobView from '@/views/core/Home/CreateJobView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,15 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/create-job',
+      name: 'create-job',
+      component: CreateJobView,
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true
+      }
     },
     {
       path: '/job/:id',

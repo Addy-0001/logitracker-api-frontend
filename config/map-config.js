@@ -12,6 +12,7 @@ const NEPAL_BOUNDS = [
 
 // Map configuration
 export const mapConfig = {
+    apiKey: MAPTILER_API_KEY,
     container: 'tracking-map',
     options: {
         center: [27.7172, 85.3240], // Kathmandu, Nepal
@@ -63,7 +64,7 @@ export const addJobMarkers = (map, job) => {
     if (job.pickupCoords && Array.isArray(job.pickupCoords) && job.pickupCoords.length === 2) {
         L.marker(job.pickupCoords, { icon: mapConfig.markerIcons.pickup })
             .addTo(map)
-            .bindPopup(`<b>Pickup Location</b><br>${job.pickupLocation}<br>Completed: ${job.pickupTime}`);
+            .bindPopup(`< b > Pickup Location</b > <br>${job.pickupLocation}<br>Completed: ${job.pickupTime}`);
     }
 
     // Delivery marker

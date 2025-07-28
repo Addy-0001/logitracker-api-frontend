@@ -170,8 +170,7 @@
                     </div>
 
                     <div class="card-avatar">
-                        <img :src="user.avatar ? `http://localhost:5000${user.avatar}` : '/default-avatar.png'"
-                            :alt="user.name" />
+                        <img :src="user.avatar" :alt="user.name" />
                     </div>
 
                     <div class="card-content">
@@ -254,13 +253,6 @@
                             <div class="avatar-section">
                                 <div class="avatar-preview">
                                     <img :src="userForm.avatar || '/default-avatar.png'" alt="User Avatar" />
-                                    <div class="avatar-upload">
-                                        <label for="avatar-input" class="avatar-edit">
-                                            <i class="fas fa-camera"></i>
-                                        </label>
-                                        <input type="file" id="avatar-input" accept="image/*"
-                                            @change="handleAvatarChange" class="avatar-input" />
-                                    </div>
                                 </div>
                             </div>
 
@@ -270,7 +262,7 @@
                                     <input type="text" id="firstName" v-model="userForm.firstName" class="form-input"
                                         :class="{ 'error': userErrors.firstName }" placeholder="Enter first name" />
                                     <span v-if="userErrors.firstName" class="error-message">{{ userErrors.firstName
-                                    }}</span>
+                                        }}</span>
                                 </div>
 
                                 <div class="form-group">
@@ -278,7 +270,7 @@
                                     <input type="text" id="lastName" v-model="userForm.lastName" class="form-input"
                                         :class="{ 'error': userErrors.lastName }" placeholder="Enter last name" />
                                     <span v-if="userErrors.lastName" class="error-message">{{ userErrors.lastName
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </div>
 
@@ -324,7 +316,7 @@
                                     <input type="text" id="company" v-model="userForm.company" class="form-input"
                                         :class="{ 'error': userErrors.company }" placeholder="Enter company name" />
                                     <span v-if="userErrors.company" class="error-message">{{ userErrors.company
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
@@ -349,7 +341,7 @@
                                         </button>
                                     </div>
                                     <span v-if="userErrors.password" class="error-message">{{ userErrors.password
-                                    }}</span>
+                                        }}</span>
                                 </div>
 
                                 <div class="form-group">
@@ -466,7 +458,7 @@ const fetchUsers = async () => {
             phone: user.phone || '',
             role: user.role || '',
             company: user.company || '',
-            avatar: user.avatar || null,
+            avatar: user.profileImage || null,
             name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
             createdAt: user.createdAt || new Date().toISOString(),
         }));
@@ -627,7 +619,7 @@ const validateUserForm = () => {
     if (!phone.trim()) {
         userErrors.value.phone = 'Phone number is required';
     } else if (!/^\+977[1-9]\d{9}$/.test(phone)) {
-        userErrors.value.phone = 'Please enter a valid Nepal phone number (+977 followed by 9 digits)';
+        userErrors.value.phone = 'Please enter a valid Nepal phone number (+977 followed by 10 digits)';
     }
     if (!userForm.value.role) userErrors.value.role = 'Role is required';
 
@@ -712,7 +704,7 @@ const saveUser = async () => {
 
             userData._id = userForm.value._id;
             if (avatarUrl) userData.avatar = avatarUrl;
-            const updateResponse = await apiClient.patch('/user/update', userData);
+            const updateResponse = await apiClient.patch(`/user/updateUserProfile/${userData._id}`, userData);
             userFormSuccess.value = updateResponse.data.message || 'User updated successfully';
         } else {
             userData.password = userForm.value.password;
