@@ -94,8 +94,6 @@ export default {
             // Password validation
             if (!this.formData.password) {
                 this.errors.password = 'Password is required';
-            } else if (this.formData.password.length < 8) {
-                this.errors.password = 'Password must be at least 8 characters';
             }
 
             return Object.keys(this.errors).length === 0;
@@ -122,24 +120,21 @@ export default {
             try {
                 const response = await this.authenticateUser(this.formData);
 
-                // Check if user has admin role
-                if (response.user.role !== 'admin') {
-                    throw new Error('Only admins can log in.');
-                }
-
                 // Update Pinia store with auth data
                 const authStore = useAuthStore();
                 authStore.setAuthData({
                     token: response.token,
-                    user: response.user,
+                    user: {
+                        email: this.formData.email,
+                        role: 'admin' // Backend ensures admin role
+                    },
                     rememberMe: this.rememberMe
                 });
 
                 // Emit login success event
                 this.$emit('login-success', {
                     email: this.formData.email,
-                    rememberMe: this.rememberMe,
-                    user: response.user
+                    rememberMe: this.rememberMe
                 });
 
                 // Redirect to dashboard
@@ -147,12 +142,12 @@ export default {
 
             } catch (error) {
                 // Handle specific errors
-                if (error.message === 'Only admins can log in.') {
-                    this.loginError = 'Only administrators are allowed to log in.';
-                } else if (error.response && error.response.data && error.response.data.message) {
+                if (error.response && error.response.data && error.response.data.message) {
                     const message = error.response.data.message;
                     if (message === 'Invalid credentials') {
                         this.loginError = 'Incorrect email or password. Please try again.';
+                    } else if (message === 'Unauthorized Access') {
+                        this.loginError = 'Only administrators are allowed to log in.';
                     } else {
                         this.loginError = message;
                     }
@@ -165,11 +160,11 @@ export default {
         },
 
         async authenticateUser(credentials) {
-            const response = await apiClient.post('/auth/login', {
+            const response = await apiClient.post('/auth/admin-login', {
                 email: credentials.email,
                 password: credentials.password
             });
-            return response.data; // { message, token, user }
+            return response.data; // { success, message, token }
         }
     },
 

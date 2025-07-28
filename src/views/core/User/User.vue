@@ -10,7 +10,7 @@
                 <div class="header-actions">
                     <button class="export-btn" @click="exportUsers">
                         <i class="fas fa-download"></i>
-                        Export Users
+                        Export Drivers
                     </button>
                     <button class="add-user-btn" @click="openAddUserModal">
                         <i class="fas fa-user-plus"></i>
@@ -110,9 +110,7 @@
                     </div>
                     <div class="header-cell user">User</div>
                     <div class="header-cell role">Role</div>
-                    <div class="header-cell department">Department</div>
-                    <div class="header-cell status">Status</div>
-                    <div class="header-cell last-active">Last Active</div>
+                    <div class="header-cell company">Company</div>
                     <div class="header-cell actions">Actions</div>
                 </div>
 
@@ -127,7 +125,6 @@
                             <div class="user-avatar">
                                 <img :src="user.avatar ? `http://localhost:5000${user.avatar}` : '/default-avatar.png'"
                                     :alt="user.name" />
-                                <span v-if="user.isOnline" class="online-indicator"></span>
                             </div>
                             <div class="user-details">
                                 <span class="user-name">{{ user.name }}</span>
@@ -144,22 +141,8 @@
                         </span>
                     </div>
 
-                    <div class="user-cell department">
-                        <span class="department-text">{{ formatDepartment(user.department) }}</span>
-                    </div>
-
-                    <div class="user-cell status">
-                        <span :class="['status-badge', user.status]">
-                            <i :class="getStatusIcon(user.status)"></i>
-                            {{ formatStatus(user.status) }}
-                        </span>
-                    </div>
-
-                    <div class="user-cell last-active">
-                        <div class="activity-info">
-                            <span class="activity-time">{{ formatLastActive(user.lastActive) }}</span>
-                            <span class="activity-device">{{ user.lastDevice }}</span>
-                        </div>
+                    <div class="user-cell company">
+                        <span class="company-text">{{ user.company || 'N/A' }}</span>
                     </div>
 
                     <div class="user-cell actions">
@@ -184,13 +167,11 @@
                     :class="{ 'selected': selectedUsers.includes(user._id) }">
                     <div class="card-header">
                         <input type="checkbox" :value="user._id" v-model="selectedUsers" class="card-checkbox" />
-                        <span :class="['status-indicator', user.status]"></span>
                     </div>
 
                     <div class="card-avatar">
                         <img :src="user.avatar ? `http://localhost:5000${user.avatar}` : '/default-avatar.png'"
                             :alt="user.name" />
-                        <span v-if="user.isOnline" class="online-indicator"></span>
                     </div>
 
                     <div class="card-content">
@@ -203,19 +184,12 @@
                                 <i :class="getRoleIcon(user.role)"></i>
                                 {{ formatRole(user.role) }}
                             </span>
-                            <span :class="['status-badge', user.status]">
-                                {{ formatStatus(user.status) }}
-                            </span>
                         </div>
 
                         <div class="user-meta">
                             <div class="meta-item">
                                 <i class="fas fa-building"></i>
-                                <span>{{ formatDepartment(user.department) }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <i class="fas fa-clock"></i>
-                                <span>{{ formatLastActive(user.lastActive) }}</span>
+                                <span>{{ user.company || 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -320,17 +294,17 @@
                                 <div class="form-group">
                                     <label for="phone" class="form-label">Phone Number *</label>
                                     <input type="tel" id="phone" v-model="userForm.phone" class="form-input"
-                                        :class="{ 'error': userErrors.phone }" placeholder="Enter phone number" />
+                                        :class="{ 'error': userErrors.phone }" placeholder="+977XXXXXXXXX" />
                                     <span v-if="userErrors.phone" class="error-message">{{ userErrors.phone }}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Role & Department -->
+                        <!-- Role & Company -->
                         <div class="form-section">
                             <h3 class="section-title">
                                 <i class="fas fa-user-tag"></i>
-                                Role & Department
+                                Role & Company
                             </h3>
 
                             <div class="form-row">
@@ -346,7 +320,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="company" class="form-label">Company *</label>
+                                    <label for="company" class="form-label">Company</label>
                                     <input type="text" id="company" v-model="userForm.company" class="form-input"
                                         :class="{ 'error': userErrors.company }" placeholder="Enter company name" />
                                     <span v-if="userErrors.company" class="error-message">{{ userErrors.company
@@ -423,485 +397,431 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import apiClient from '@/api/axios';
 
-export default {
-    name: 'UserManagement',
-    setup() {
-        const router = useRouter();
-        const authStore = useAuthStore();
+const router = useRouter();
+const authStore = useAuthStore();
 
-        const searchQuery = ref('');
-        const selectedRole = ref('');
-        const selectedStatus = ref('');
-        const selectedDepartment = ref('');
-        const viewMode = ref('grid');
-        const currentPage = ref(1);
-        const itemsPerPage = ref(10);
-        const selectedUsers = ref([]);
-        const showUserModal = ref(false);
-        const isEditMode = ref(false);
-        const isSavingUser = ref(false);
-        const userFormSuccess = ref('');
-        const userFormError = ref('');
-        const showPassword = ref(false);
-        const isLoading = ref(false);
-        const error = ref('');
-        const users = ref([]);
-        const userStats = ref({
-            total: 0,
+const searchQuery = ref('');
+const selectedRole = ref('');
+const viewMode = ref('grid');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const selectedUsers = ref([]);
+const showUserModal = ref(false);
+const isEditMode = ref(false);
+const isSavingUser = ref(false);
+const userFormSuccess = ref('');
+const userFormError = ref('');
+const showPassword = ref(false);
+const isLoading = ref(false);
+const error = ref('');
+const users = ref([]);
+const userStats = ref({
+    total: 0,
+    totalChange: 0,
+    drivers: 0,
+    driversChange: 0,
+});
+
+const userForm = ref({
+    _id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    role: '',
+    company: '',
+    avatar: null,
+    avatarFile: null,
+    password: '',
+    confirmPassword: '',
+});
+
+const userErrors = ref({});
+
+const fetchUsers = async () => {
+    isLoading.value = true;
+    error.value = '';
+    try {
+        const params = {};
+        if (searchQuery.value) params.search = searchQuery.value;
+        if (selectedRole.value && ['admin', 'driver'].includes(selectedRole.value)) {
+            params.role = selectedRole.value;
+        }
+
+        const response = await apiClient.get('/user/getUsers', { params });
+        console.log('fetchUsers response:', response.data);
+
+        const userData = Array.isArray(response.data) ? response.data : response.data.users || [];
+        users.value = userData.map(user => ({
+            _id: user._id || '',
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            role: user.role || '',
+            company: user.company || '',
+            avatar: user.avatar || null,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+            createdAt: user.createdAt || new Date().toISOString(),
+        }));
+        userStats.value = {
+            total: users.value.length,
             totalChange: 0,
-            drivers: 0,
+            drivers: users.value.filter(user => user.role === 'driver').length,
             driversChange: 0,
-            dispatchers: 0,
-            dispatchersChange: 0,
-            active: 0,
-            activeChange: 0,
+        };
+    } catch (err) {
+        console.error('Error fetching users:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
         });
-
-        const userForm = ref({
-            _id: '',
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            role: '',
-            company: '',
-            avatar: null,
-            avatarFile: null,
-            password: '',
-            confirmPassword: '',
-        });
-
-        const userErrors = ref({});
-
-        const fetchUsers = async () => {
-            isLoading.value = true;
-            error.value = '';
-            try {
-                const params = {};
-                if (searchQuery.value) params.search = searchQuery.value;
-                if (selectedRole.value && ['admin', 'driver'].includes(selectedRole.value)) {
-                    params.role = selectedRole.value;
-                }
-
-                const response = await apiClient.get('users/users', { params });
-                users.value = response.data.users.map(user => ({
-                    ...user,
-                    firstName: user.firstName || '',
-                    lastName: user.lastName || '',
-                    email: user.email || '',
-                    phone: user.phone || '',
-                    role: user.role || '',
-                    company: user.company || '',
-                    avatar: user.avatar || null,
-                    name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
-                    status: 'active', // Mock status
-                    department: '', // Mock department
-                    isOnline: false, // Mock online status
-                    lastActive: null, // Mock last active
-                    lastDevice: '', // Mock last device
-                }));
-                userStats.value = {
-                    ...response.data.stats,
-                    totalChange: 0,
-                    driversChange: 0,
-                    dispatchersChange: 0,
-                    activeChange: 0,
-                };
-            } catch (err) {
-                error.value = err.response?.data?.message || 'Failed to fetch users';
-                if (err.response?.status === 401 || err.response?.status === 403) {
-                    authStore.logout();
-                    router.push('/login');
-                }
-            } finally {
-                isLoading.value = false;
-            }
-        };
-
-        const filteredUsers = computed(() => {
-            let filtered = [...users.value];
-            if (selectedRole.value && !['admin', 'driver'].includes(selectedRole.value)) {
-                filtered = filtered.filter(user => user.role === selectedRole.value);
-            }
-            if (selectedStatus.value) {
-                filtered = filtered.filter(user => user.status === selectedStatus.value);
-            }
-            if (selectedDepartment.value) {
-                filtered = filtered.filter(user => user.department === selectedDepartment.value);
-            }
-            return filtered;
-        });
-
-        const paginatedUsers = computed(() => {
-            const start = (currentPage.value - 1) * itemsPerPage.value;
-            const end = start + itemsPerPage.value;
-            return filteredUsers.value.slice(start, end);
-        });
-
-        const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage.value));
-
-        const visiblePages = computed(() => {
-            const pages = [];
-            const start = Math.max(1, currentPage.value - 2);
-            const end = Math.min(totalPages.value, currentPage.value + 2);
-            for (let i = start; i <= end; i++) {
-                pages.push(i);
-            }
-            return pages;
-        });
-
-        const allSelected = computed(() =>
-            paginatedUsers.value.length > 0 &&
-            paginatedUsers.value.every(user => selectedUsers.value.includes(user._id))
-        );
-
-        const someSelected = computed(() => selectedUsers.value.length > 0 && !allSelected.value);
-
-        const clearSearch = () => {
-            searchQuery.value = '';
-            fetchUsers();
-        };
-
-        const clearFilters = () => {
-            searchQuery.value = '';
-            selectedRole.value = '';
-            selectedStatus.value = '';
-            selectedDepartment.value = '';
-            fetchUsers();
-        };
-
-        const toggleSelectAll = () => {
-            if (allSelected.value) {
-                selectedUsers.value = selectedUsers.value.filter(
-                    id => !paginatedUsers.value.some(user => user._id === id)
-                );
-            } else {
-                const newSelections = paginatedUsers.value
-                    .filter(user => !selectedUsers.value.includes(user._id))
-                    .map(user => user._id);
-                selectedUsers.value.push(...newSelections);
-            }
-        };
-
-        const getRoleIcon = role => ({
-            admin: 'fas fa-user-shield',
-            driver: 'fas fa-truck',
-            dispatcher: 'fas fa-headset',
-            customer: 'fas fa-user',
-        }[role] || 'fas fa-user');
-
-        const getStatusIcon = status => ({
-            active: 'fas fa-check-circle',
-            inactive: 'fas fa-times-circle',
-            pending: 'fas fa-clock',
-            suspended: 'fas fa-ban',
-        }[status] || 'fas fa-circle');
-
-        const formatRole = role => ({
-            admin: 'Administrator',
-            driver: 'Driver',
-            dispatcher: 'Dispatcher',
-            customer: 'Customer',
-        }[role] || role);
-
-        const formatStatus = status => status.charAt(0).toUpperCase() + status.slice(1);
-
-        const formatDepartment = department => ({
-            operations: 'Operations',
-            logistics: 'Logistics',
-            'customer-service': 'Customer Service',
-            management: 'Management',
-        }[department] || department || 'N/A');
-
-        const formatLastActive = () => 'N/A'; // Mocked as no lastActive field
-
-        const openAddUserModal = () => {
-            isEditMode.value = false;
-            resetUserForm();
-            showUserModal.value = true;
-        };
-
-        const editUser = user => {
-            isEditMode.value = true;
-            userForm.value = {
-                _id: user._id || '',
-                firstName: user.firstName || '',
-                lastName: user.lastName || '',
-                email: user.email || '',
-                phone: user.phone || '',
-                role: user.role || '',
-                company: user.company || '',
-                avatar: user.avatar || null,
-                avatarFile: null,
-                password: '',
-                confirmPassword: '',
-            };
-            showUserModal.value = true;
-        };
-
-        const closeUserModal = () => {
-            showUserModal.value = false;
-            resetUserForm();
-        };
-
-        const resetUserForm = () => {
-            userForm.value = {
-                _id: '',
-                firstName: '',
-                lastName: '',
-                email: '',
-                phone: '',
-                role: '',
-                company: '',
-                avatar: null,
-                avatarFile: null,
-                password: '',
-                confirmPassword: '',
-            };
-            userErrors.value = {};
-            userFormSuccess.value = '';
-            userFormError.value = '';
-        };
-
-        const validateUserForm = () => {
-            userErrors.value = {};
-
-            // Defensive checks to prevent undefined errors
-            const firstName = userForm.value.firstName || '';
-            const lastName = userForm.value.lastName || '';
-            const email = userForm.value.email || '';
-            const phone = userForm.value.phone || '';
-            const company = userForm.value.company || '';
-
-            if (!firstName.trim()) userErrors.value.firstName = 'First name is required';
-            else if (firstName.trim().length < 2) userErrors.value.firstName = 'First name must be at least 2 characters';
-            if (!lastName.trim()) userErrors.value.lastName = 'Last name is required';
-            else if (lastName.trim().length < 2) userErrors.value.lastName = 'Last name must be at least 2 characters';
-            if (!email.trim()) {
-                userErrors.value.email = 'Email is required';
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                userErrors.value.email = 'Please enter a valid email address';
-            }
-            if (!phone.trim()) {
-                userErrors.value.phone = 'Phone number is required';
-            } else if (!/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(phone)) {
-                userErrors.value.phone = 'Please enter a valid phone number';
-            }
-            if (!userForm.value.role) userErrors.value.role = 'Role is required';
-            if (!company.trim()) userErrors.value.company = 'Company is required';
-
-            if (!isEditMode.value) {
-                if (!userForm.value.password) {
-                    userErrors.value.password = 'Password is required';
-                } else if (userForm.value.password.length < 8) {
-                    userErrors.value.password = 'Password must be at least 8 characters';
-                }
-                if (!userForm.value.confirmPassword) {
-                    userErrors.value.confirmPassword = 'Please confirm password';
-                } else if (userForm.value.password !== userForm.value.confirmPassword) {
-                    userErrors.value.confirmPassword = 'Passwords do not match';
-                }
-            }
-
-            return Object.keys(userErrors.value).length === 0;
-        };
-
-        const handleAvatarChange = async event => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.type.match('image.*')) {
-                userFormError.value = 'Please select an image file';
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                userFormError.value = 'Image size should not exceed 5MB';
-                return;
-            }
-
-            userForm.value.avatarFile = file;
-            const reader = new FileReader();
-            reader.onload = e => {
-                userForm.value.avatar = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        const saveUser = async () => {
-            if (!validateUserForm()) return;
-
-            isSavingUser.value = true;
-            userFormError.value = '';
-            userFormSuccess.value = '';
-
-            try {
-                let avatarUrl = userForm.value.avatar;
-                if (userForm.value.avatarFile) {
-                    const formData = new FormData();
-                    formData.append('avatar', userForm.value.avatarFile);
-                    if (isEditMode.value) {
-                        formData.append('userId', userForm.value._id);
-                    }
-                    const response = await apiClient.post('/users/avatar', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    });
-                    avatarUrl = response.data.avatar;
-                }
-
-                const userData = {
-                    firstName: userForm.value.firstName,
-                    lastName: userForm.value.lastName,
-                    email: userForm.value.email,
-                    phone: userForm.value.phone,
-                    role: userForm.value.role,
-                    company: userForm.value.company,
-                    ...(avatarUrl && { avatar: avatarUrl }),
-                };
-
-                if (isEditMode.value) {
-                    // Update user
-                    const formData = new FormData();
-                    Object.entries(userData).forEach(([key, value]) => {
-                        formData.append(key, value);
-                    });
-                    formData.append('_id', userForm.value._id);
-                    await apiClient.patch('/users/update', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    });
-                    userFormSuccess.value = 'User updated successfully';
-                } else {
-                    // Create new user
-                    userData.password = userForm.value.password;
-                    await apiClient.post('/auth/signup', userData);
-                    userFormSuccess.value = 'User created successfully';
-                }
-
-                await fetchUsers();
-                setTimeout(() => {
-                    closeUserModal();
-                }, 2000);
-            } catch (err) {
-                console.error('Save user error:', {
-                    message: err.message,
-                    response: err.response?.data,
-                    status: err.response?.status,
-                });
-                userFormError.value = err.response?.data?.message || 'Failed to save user';
-                if (err.response?.data?.errors) {
-                    err.response.data.errors.forEach(error => {
-                        userErrors.value[error.param] = error.msg;
-                    });
-                }
-                if (err.response?.status === 401 || err.response?.status === 403) {
-                    authStore.logout();
-                    router.push('/login');
-                }
-            } finally {
-                isSavingUser.value = false;
-            }
-        };
-
-        const viewUserProfile = user => {
-            router.push(`/profile/${user._id}`);
-        };
-
-        const showUserMenu = user => {
-            console.log('Showing user menu:', user._id);
-        };
-
-        const bulkDelete = async () => {
-            if (!confirm(`Are you sure you want to delete ${selectedUsers.value.length} users?`)) return;
-            try {
-                await apiClient.delete('/users/bulk-delete', { data: { userIds: selectedUsers.value } });
-                await fetchUsers();
-                selectedUsers.value = [];
-            } catch (err) {
-                error.value = err.response?.data?.message || 'Failed to delete users';
-            }
-        };
-
-        const exportUsers = async () => {
-            try {
-                const response = await apiClient.get('/users/export', { responseType: 'blob' });
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', 'users.csv');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (err) {
-                error.value = err.response?.data?.message || 'Failed to export users';
-            }
-        };
-
-        onMounted(() => {
-            if (!authStore.isAuthenticated || authStore.getUser?.role !== 'admin') {
-                error.value = 'Admin access required';
-                authStore.logout();
-                router.push('/login');
-                return;
-            }
-            fetchUsers();
-        });
-
-        return {
-            searchQuery,
-            selectedRole,
-            selectedStatus,
-            selectedDepartment,
-            viewMode,
-            currentPage,
-            itemsPerPage,
-            selectedUsers,
-            showUserModal,
-            isEditMode,
-            isSavingUser,
-            userFormSuccess,
-            userFormError,
-            showPassword,
-            isLoading,
-            error,
-            users,
-            userStats,
-            userForm,
-            userErrors,
-            filteredUsers,
-            paginatedUsers,
-            totalPages,
-            visiblePages,
-            allSelected,
-            someSelected,
-            clearSearch,
-            clearFilters,
-            toggleSelectAll,
-            getRoleIcon,
-            getStatusIcon,
-            formatRole,
-            formatStatus,
-            formatDepartment,
-            formatLastActive,
-            openAddUserModal,
-            editUser,
-            closeUserModal,
-            resetUserForm,
-            validateUserForm,
-            handleAvatarChange,
-            saveUser,
-            viewUserProfile,
-            showUserMenu,
-            bulkDelete,
-            exportUsers,
-        };
-    },
+        error.value = err.response?.data?.message || 'Failed to fetch users';
+        if (err.response?.status === 401 || err.response?.status === 403) {
+            authStore.logout();
+            router.push('/login');
+        }
+    } finally {
+        isLoading.value = false;
+    }
 };
+
+const filteredUsers = computed(() => {
+    let filtered = [...users.value]; // Ensure array
+    if (selectedRole.value && ['admin', 'driver'].includes(selectedRole.value)) {
+        filtered = filtered.filter(user => user.role === selectedRole.value);
+    }
+    return filtered;
+});
+
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredUsers.value.slice(start, end);
+});
+
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage.value));
+
+const visiblePages = computed(() => {
+    const pages = [];
+    const start = Math.max(1, currentPage.value - 2);
+    const end = Math.min(totalPages.value, start + 4); // Show 5 pages max
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    return pages;
+});
+
+const allSelected = computed(() =>
+    paginatedUsers.value.length > 0 &&
+    paginatedUsers.value.every(user => selectedUsers.value.includes(user._id))
+);
+
+const someSelected = computed(() => selectedUsers.value.length > 0 && !allSelected.value);
+
+const clearSearch = () => {
+    searchQuery.value = '';
+    fetchUsers();
+};
+
+const clearFilters = () => {
+    searchQuery.value = '';
+    selectedRole.value = '';
+    fetchUsers();
+};
+
+const toggleSelectAll = () => {
+    if (allSelected.value) {
+        selectedUsers.value = selectedUsers.value.filter(
+            id => !paginatedUsers.value.some(user => user._id === id)
+        );
+    } else {
+        const newSelections = paginatedUsers.value
+            .filter(user => !selectedUsers.value.includes(user._id))
+            .map(user => user._id);
+        selectedUsers.value.push(...newSelections);
+    }
+};
+
+const getRoleIcon = role => ({
+    admin: 'fas fa-user-shield',
+    driver: 'fas fa-truck',
+}[role] || 'fas fa-user');
+
+const formatRole = role => ({
+    admin: 'Administrator',
+    driver: 'Driver',
+}[role] || role);
+
+const openAddUserModal = () => {
+    isEditMode.value = false;
+    resetUserForm();
+    showUserModal.value = true;
+};
+
+const editUser = user => {
+    isEditMode.value = true;
+    userForm.value = {
+        _id: user._id || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        role: user.role || '',
+        company: user.company || '',
+        avatar: user.avatar || null,
+        avatarFile: null,
+        password: '',
+        confirmPassword: '',
+    };
+    showUserModal.value = true;
+};
+
+const closeUserModal = () => {
+    showUserModal.value = false;
+    resetUserForm();
+};
+
+const resetUserForm = () => {
+    userForm.value = {
+        _id: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        role: '',
+        company: '',
+        avatar: null,
+        avatarFile: null,
+        password: '',
+        confirmPassword: '',
+    };
+    userErrors.value = {};
+    userFormSuccess.value = '';
+    userFormError.value = '';
+};
+
+const validateUserForm = () => {
+    userErrors.value = {};
+
+    const firstName = userForm.value.firstName || '';
+    const lastName = userForm.value.lastName || '';
+    const email = userForm.value.email || '';
+    const phone = userForm.value.phone || '';
+
+    if (!firstName.trim()) userErrors.value.firstName = 'First name is required';
+    else if (firstName.trim().length < 2) userErrors.value.firstName = 'First name must be at least 2 characters';
+    if (!lastName.trim()) userErrors.value.lastName = 'Last name is required';
+    else if (lastName.trim().length < 2) userErrors.value.lastName = 'Last name must be at least 2 characters';
+    if (!email.trim()) {
+        userErrors.value.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        userErrors.value.email = 'Please enter a valid email address';
+    }
+    if (!phone.trim()) {
+        userErrors.value.phone = 'Phone number is required';
+    } else if (!/^\+977[1-9]\d{9}$/.test(phone)) {
+        userErrors.value.phone = 'Please enter a valid Nepal phone number (+977 followed by 9 digits)';
+    }
+    if (!userForm.value.role) userErrors.value.role = 'Role is required';
+
+    if (!isEditMode.value) {
+        if (!userForm.value.password) {
+            userErrors.value.password = 'Password is required';
+        } else if (userForm.value.password.length < 8) {
+            userErrors.value.password = 'Password must be at least 8 characters';
+        }
+        if (!userForm.value.confirmPassword) {
+            userErrors.value.confirmPassword = 'Please confirm password';
+        } else if (userForm.value.password !== userForm.value.confirmPassword) {
+            userErrors.value.confirmPassword = 'Passwords do not match';
+        }
+    }
+
+    return Object.keys(userErrors.value).length === 0;
+};
+
+const handleAvatarChange = async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.match('image.*')) {
+        userFormError.value = 'Please select an image file';
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        userFormError.value = 'Image size should not exceed 5MB';
+        return;
+    }
+
+    userForm.value.avatarFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+        userForm.value.avatar = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+const parseValidationErrors = (error) => {
+    if (error.response?.data?.errors) {
+        const errors = {};
+        error.response.data.errors.forEach(err => {
+            const field = err.param ? err.param.split('.').pop() : err.path;
+            errors[field] = err.msg;
+        });
+        return errors;
+    }
+    return null;
+};
+
+const saveUser = async () => {
+    if (!validateUserForm()) return;
+
+    isSavingUser.value = true;
+    userFormError.value = '';
+    userFormSuccess.value = '';
+
+    try {
+        let avatarUrl = null;
+        const userData = {
+            firstName: userForm.value.firstName,
+            lastName: userForm.value.lastName,
+            email: userForm.value.email,
+            phone: userForm.value.phone,
+            role: userForm.value.role,
+            company: userForm.value.company || undefined,
+        };
+
+        if (isEditMode.value) {
+            if (userForm.value.avatarFile) {
+                const formData = new FormData();
+                formData.append('avatar', userForm.value.avatarFile);
+                formData.append('userId', userForm.value._id);
+                const avatarResponse = await apiClient.post('/user/uploadAvatar', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                avatarUrl = avatarResponse.data.avatar;
+            }
+
+            userData._id = userForm.value._id;
+            if (avatarUrl) userData.avatar = avatarUrl;
+            const updateResponse = await apiClient.patch('/user/update', userData);
+            userFormSuccess.value = updateResponse.data.message || 'User updated successfully';
+        } else {
+            userData.password = userForm.value.password;
+            const createResponse = await publicApiClient.post('/auth/signup', userData);
+            const newUserId = createResponse.data.user?._id;
+
+            if (userForm.value.avatarFile && newUserId) {
+                const formData = new FormData();
+                formData.append('avatar', userForm.value.avatarFile);
+                formData.append('userId', newUserId);
+                const avatarResponse = await apiClient.post('/user/uploadAvatar', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                avatarUrl = avatarResponse.data.avatar;
+
+                if (avatarUrl) {
+                    await apiClient.patch('/user/update', {
+                        _id: newUserId,
+                        avatar: avatarUrl,
+                    });
+                }
+            }
+
+            userFormSuccess.value = createResponse.data.message || 'User created successfully';
+        }
+
+        await fetchUsers();
+        setTimeout(() => {
+            closeUserModal();
+        }, 2000);
+    } catch (err) {
+        console.error('Save user error:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+        });
+        userFormError.value = err.response?.data?.message || 'Failed to save user';
+        if (err.response?.status === 400) {
+            const validationErrors = parseValidationErrors(err);
+            if (validationErrors) {
+                userErrors.value = { ...userErrors.value, ...validationErrors };
+            } else {
+                userFormError.value = err.response?.data?.message || 'Invalid user data';
+            }
+        } else if (err.response?.status === 401 || err.response?.status === 403) {
+            userFormError.value = 'Unauthorized access. Please log in again.';
+            authStore.logout();
+            router.push('/login');
+        } else {
+            userFormError.value = 'An unexpected error occurred. Please try again.';
+        }
+    } finally {
+        isSavingUser.value = false;
+    }
+};
+
+const viewUserProfile = user => {
+    router.push(`/profile/${user._id}`);
+};
+
+const showUserMenu = user => {
+    console.log('Showing user menu:', user._id);
+};
+
+const bulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedUsers.value.length} users?`)) return;
+    try {
+        await Promise.all(selectedUsers.value.map(id => apiClient.delete(`/user/delete/${id}`)));
+        await fetchUsers();
+        selectedUsers.value = [];
+    } catch (err) {
+        console.error('Error deleting users:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+        });
+        error.value = err.response?.data?.message || 'Failed to delete users';
+    }
+};
+
+const exportUsers = async () => {
+    try {
+        const response = await apiClient.get('/user/exportDrivers', { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'drivers.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) {
+        console.error('Error exporting users:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+        });
+        error.value = err.response?.data?.message || 'Failed to export drivers';
+    }
+};
+
+onMounted(() => {
+    if (!authStore.isAuthenticated || authStore.getUser?.role !== 'admin') {
+        error.value = 'Admin access required';
+        authStore.logout();
+        router.push('/login');
+        return;
+    }
+    fetchUsers();
+});
 </script>
 
 <style scoped>

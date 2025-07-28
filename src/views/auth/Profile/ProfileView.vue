@@ -3,8 +3,7 @@
         <div class="profile-sidebar">
             <div class="profile-user">
                 <div class="profile-avatar">
-                    <img :src="user.avatar ? `${apiBaseUrl}${user.avatar}` : '/default-avatar.png'" alt="User Avatar"
-                        @error="user.avatar = null" />
+                    <img :src="user.profileImage" alt="User Avatar" @error="user.profileImage = null" />
                     <div class="avatar-upload">
                         <label for="avatar-input" class="avatar-edit">
                             <i class="fas fa-camera"></i>
@@ -14,7 +13,7 @@
                     </div>
                 </div>
                 <h3 class="profile-name">{{ user.firstName }} {{ user.lastName }}</h3>
-                <p class="profile-company">{{ user.company }}</p>
+                <p class="profile-role">{{ user.role }}</p>
             </div>
 
             <div class="profile-nav">
@@ -79,96 +78,6 @@
                         <input type="tel" id="phone" v-model="personalInfo.phone" class="form-input"
                             :class="{ 'error': errors.phone }" placeholder="Enter your phone number" />
                         <span v-if="errors.phone" class="error-message">{{ errors.phone }}</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="position" class="form-label">Job Position</label>
-                        <input type="text" id="position" v-model="personalInfo.position" class="form-input"
-                            :class="{ 'error': errors.position }" placeholder="Enter your job position" />
-                        <span v-if="errors.position" class="error-message">{{ errors.position }}</span>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="save-button" :disabled="isLoading">
-                            <span v-if="!isLoading">Save Changes</span>
-                            <span v-else class="loading-spinner">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                Saving...
-                            </span>
-                        </button>
-                    </div>
-
-                    <div v-if="updateSuccess" class="update-success">
-                        <i class="fas fa-check-circle"></i>
-                        {{ updateSuccess }}
-                    </div>
-
-                    <div v-if="updateError" class="update-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ updateError }}
-                    </div>
-                </form>
-            </div>
-
-            <!-- Company Information Section -->
-            <div v-if="activeSection === 'company'" class="profile-section">
-                <div class="section-header">
-                    <h2>Company Information</h2>
-                    <p>Update your company details</p>
-                </div>
-
-                <form @submit.prevent="updateCompanyInfo" class="profile-form">
-                    <div class="form-group">
-                        <label for="companyName" class="form-label">Company Name</label>
-                        <input type="text" id="companyName" v-model="companyInfo.name" class="form-input"
-                            :class="{ 'error': errors.companyName }" placeholder="Enter your company name" />
-                        <span v-if="errors.companyName" class="error-message">{{ errors.companyName }}</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="industry" class="form-label">Industry</label>
-                        <select id="industry" v-model="companyInfo.industry" class="form-input"
-                            :class="{ 'error': errors.industry }">
-                            <option value="" disabled>Select your industry</option>
-                            <option value="logistics">Logistics & Transportation</option>
-                            <option value="manufacturing">Manufacturing</option>
-                            <option value="retail">Retail & E-commerce</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="food">Food & Beverage</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <span v-if="errors.industry" class="error-message">{{ errors.industry }}</span>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="size" class="form-label">Company Size</label>
-                            <select id="size" v-model="companyInfo.size" class="form-input"
-                                :class="{ 'error': errors.size }">
-                                <option value="" disabled>Select company size</option>
-                                <option value="1-10">1-10 employees</option>
-                                <option value="11-50">11-50 employees</option>
-                                <option value="51-200">51-200 employees</option>
-                                <option value="201-500">201-500 employees</option>
-                                <option value="501+">501+ employees</option>
-                            </select>
-                            <span v-if="errors.size" class="error-message">{{ errors.size }}</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="website" class="form-label">Website</label>
-                            <input type="url" id="website" v-model="companyInfo.website" class="form-input"
-                                :class="{ 'error': errors.website }" placeholder="https://example.com" />
-                            <span v-if="errors.website" class="error-message">{{ errors.website }}</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea id="address" v-model="companyInfo.address" class="form-textarea"
-                            :class="{ 'error': errors.address }" placeholder="Enter your company address"
-                            rows="3"></textarea>
-                        <span v-if="errors.address" class="error-message">{{ errors.address }}</span>
                     </div>
 
                     <div class="form-actions">
@@ -272,113 +181,6 @@
                     </div>
                 </form>
             </div>
-
-            <!-- Preferences Section -->
-            <div v-if="activeSection === 'preferences'" class="profile-section">
-                <div class="section-header">
-                    <h2>Account Preferences</h2>
-                    <p>Manage your account settings</p>
-                </div>
-
-                <form @submit.prevent="updatePreferences" class="profile-form">
-                    <div class="form-group">
-                        <label class="form-label">Email Notifications</label>
-                        <div class="preference-options">
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.emailShipmentUpdates" />
-                                <span class="checkmark"></span>
-                                Shipment updates
-                            </label>
-
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.emailWeeklyReports" />
-                                <span class="checkmark"></span>
-                                Weekly reports
-                            </label>
-
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.emailNewFeatures" />
-                                <span class="checkmark"></span>
-                                New features and updates
-                            </label>
-
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.emailMarketing" />
-                                <span class="checkmark"></span>
-                                Marketing and promotional emails
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Dashboard Preferences</label>
-                        <div class="preference-options">
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.showRecentShipments" />
-                                <span class="checkmark"></span>
-                                Show recent shipments on dashboard
-                            </label>
-
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.showAnalytics" />
-                                <span class="checkmark"></span>
-                                Show analytics widgets
-                            </label>
-
-                            <label class="checkbox-container">
-                                <input type="checkbox" v-model="preferences.enableNotifications" />
-                                <span class="checkmark"></span>
-                                Enable browser notifications
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="language" class="form-label">Language</label>
-                        <select id="language" v-model="preferences.language" class="form-input">
-                            <option value="en">English</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="timezone" class="form-label">Timezone</label>
-                        <select id="timezone" v-model="preferences.timezone" class="form-input">
-                            <option value="UTC-8">Pacific Time (UTC-8)</option>
-                            <option value="UTC-5">Eastern Time (UTC-5)</option>
-                            <option value="UTC+0">Greenwich Mean Time (UTC+0)</option>
-                            <option value="UTC+1">Central European Time (UTC+1)</option>
-                            <option value="UTC+2">Eastern European Time (UTC+2)</option>
-                            <option value="UTC+3">Moscow Time (UTC+3)</option>
-                            <option value="UTC+4">Gulf Standard Time (UTC+4)</option>
-                            <option value="UTC+5">Pakistan Standard Time (UTC+5)</option>
-                            <option value="UTC+5:30">India Standard Time (UTC+5:30)</option>
-                            <option value="UTC+5:45">Nepal Standard Time (UTC+5:45)</option>
-                            <option value="UTC+6">Bangladesh Standard Time (UTC+6)</option>
-                            <option value="UTC+8">China Standard Time (UTC+8)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="save-button" :disabled="isLoading">
-                            <span v-if="!isLoading">Save Preferences</span>
-                            <span v-else class="loading-spinner">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                Saving...
-                            </span>
-                        </button>
-                    </div>
-
-                    <div v-if="updateSuccess" class="update-success">
-                        <i class="fas fa-check-circle"></i>
-                        {{ updateSuccess }}
-                    </div>
-
-                    <div v-if="updateError" class="update-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ updateError }}
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 </template>
@@ -388,7 +190,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import apiClient from '@/api/axios';
-// import './profileview.css';
+import { jwtDecode } from 'jwt-decode';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -397,23 +199,14 @@ const user = ref({
     firstName: '',
     lastName: '',
     email: '',
-    company: '',
-    avatar: null,
     phone: '',
-    position: '',
-    industry: '',
-    size: '',
-    website: '',
-    address: '',
-    preferences: {},
-    role: '',
+    profileImage: null,
+    role: ''
 });
 
 const sections = ref([
     { id: 'personal', name: 'Personal Information', icon: 'fas fa-user' },
-    { id: 'company', name: 'Company Information', icon: 'fas fa-building' },
-    { id: 'password', name: 'Password', icon: 'fas fa-lock' },
-    { id: 'preferences', name: 'Preferences', icon: 'fas fa-cog' },
+    { id: 'password', name: 'Password', icon: 'fas fa-lock' }
 ]);
 
 const activeSection = ref('personal');
@@ -422,34 +215,13 @@ const personalInfo = ref({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    position: '',
-});
-
-const companyInfo = ref({
-    name: '',
-    industry: '',
-    size: '',
-    website: '',
-    address: '',
+    phone: ''
 });
 
 const passwordData = ref({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: '',
-});
-
-const preferences = ref({
-    emailShipmentUpdates: true,
-    emailWeeklyReports: true,
-    emailNewFeatures: true,
-    emailMarketing: false,
-    showRecentShipments: true,
-    showAnalytics: true,
-    enableNotifications: false,
-    language: 'en',
-    timezone: 'UTC+5:45', // Default to Nepal Standard Time
+    confirmPassword: ''
 });
 
 const showCurrentPassword = ref(false);
@@ -469,12 +241,12 @@ const passwordStrength = computed(() => {
     if (!password) return 0;
 
     let strength = 0;
-    if (password.length >= 8) strength += 1;
+    if (password.length >= 6) strength += 1;
     if (password.length >= 12) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+    if (/[!@#$%^&*]/.test(password)) strength += 1;
     return Math.min(strength, 5);
 });
 
@@ -499,16 +271,8 @@ const passwordStrengthText = computed(() => {
 
 // Methods
 const isValidPhone = (phone) => {
-    return /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(phone);
-};
-
-const isValidUrl = (url) => {
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
+    const regex = /^\+977[1-9]\d{9}$/;
+    return regex.test(phone);
 };
 
 const validatePersonalInfo = () => {
@@ -524,24 +288,7 @@ const validatePersonalInfo = () => {
         errors.value.lastName = 'Last name must be at least 2 characters';
     }
     if (personalInfo.value.phone && !isValidPhone(personalInfo.value.phone)) {
-        errors.value.phone = 'Please enter a valid phone number';
-    }
-    return Object.keys(errors.value).length === 0;
-};
-
-const validateCompanyInfo = () => {
-    errors.value = {};
-    if (!companyInfo.value.name.trim()) {
-        errors.value.companyName = 'Company name is required';
-    }
-    if (!companyInfo.value.industry) {
-        errors.value.industry = 'Please select an industry';
-    }
-    if (!companyInfo.value.size) {
-        errors.value.size = 'Please select company size';
-    }
-    if (companyInfo.value.website && !isValidUrl(companyInfo.value.website)) {
-        errors.value.website = 'Please enter a valid website URL';
+        errors.value.phone = 'Please enter a valid Nepal phone number (+977 followed by 10 digits)';
     }
     return Object.keys(errors.value).length === 0;
 };
@@ -553,10 +300,16 @@ const validatePasswordData = () => {
     }
     if (!passwordData.value.newPassword) {
         errors.value.newPassword = 'New password is required';
-    } else if (passwordData.value.newPassword.length < 8) {
-        errors.value.newPassword = 'Password must be at least 8 characters';
-    } else if (passwordStrength.value < 3) {
-        errors.value.newPassword = 'Password is too weak. Use a mix of letters, numbers, and symbols';
+    } else if (passwordData.value.newPassword.length < 6) {
+        errors.value.newPassword = 'Password must be at least 6 characters';
+    } else if (!/[a-z]/.test(passwordData.value.newPassword)) {
+        errors.value.newPassword = 'Password must contain at least one lowercase letter';
+    } else if (!/[A-Z]/.test(passwordData.value.newPassword)) {
+        errors.value.newPassword = 'Password must contain at least one uppercase letter';
+    } else if (!/[0-9]/.test(passwordData.value.newPassword)) {
+        errors.value.newPassword = 'Password must contain at least one number';
+    } else if (!/[!@#$%^&*]/.test(passwordData.value.newPassword)) {
+        errors.value.newPassword = 'Password must contain at least one special character';
     }
     if (!passwordData.value.confirmPassword) {
         errors.value.confirmPassword = 'Please confirm your new password';
@@ -571,78 +324,54 @@ const fetchUserProfile = async () => {
     updateError.value = '';
 
     try {
-        const response = await apiClient.get('/users/me');
-        const userData = response.data || {};
-        console.log('User Profile Data:', userData);
-        console.log('Avatar URL:', userData.avatar);
+        const token = authStore.token;
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken.id;
+        console.log('Fetching profile for userId:', userId, 'Token:', token);
 
-        // Update reactive state with fallback values
+        const response = await apiClient.get(`/user/getProfile/${userId}`);
+        const userData = response.data.user || {};
+
+        console.log('Profile response:', response.data);
+
         user.value = {
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
             email: userData.email || '',
-            company: userData.company || '',
-            avatar: userData.avatar || null,
             phone: userData.phone || '',
-            position: userData.position || '',
-            industry: userData.industry || '',
-            size: userData.size || '',
-            website: userData.website || '',
-            address: userData.address || '',
-            preferences: userData.preferences || {},
-            role: userData.role || '',
+            profileImage: userData.profileImage || null,
+            role: userData.role || ''
         };
 
         personalInfo.value = {
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
             email: userData.email || '',
-            phone: userData.phone || '',
-            position: userData.position || '',
+            phone: userData.phone || ''
         };
 
-        companyInfo.value = {
-            name: userData.company || '',
-            industry: userData.industry || '',
-            size: userData.size || '',
-            website: userData.website || '',
-            address: userData.address || '',
-        };
-
-        preferences.value = {
-            emailShipmentUpdates: userData.preferences?.emailShipmentUpdates ?? true,
-            emailWeeklyReports: userData.preferences?.emailWeeklyReports ?? true,
-            emailNewFeatures: userData.preferences?.emailNewFeatures ?? true,
-            emailMarketing: userData.preferences?.emailMarketing ?? false,
-            showRecentShipments: userData.preferences?.showRecentShipments ?? true,
-            showAnalytics: userData.preferences?.showAnalytics ?? true,
-            enableNotifications: userData.preferences?.enableNotifications ?? false,
-            language: userData.preferences?.language ?? 'en',
-            timezone: userData.preferences?.timezone ?? 'UTC+5:45',
-        };
-
-        // Update auth store
         authStore.setAuthData({
             token: authStore.token,
             user: userData,
-            rememberMe: !!localStorage.getItem('authToken'),
+            rememberMe: !!localStorage.getItem('authToken')
         });
     } catch (error) {
         console.error('Fetch profile error:', {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
-            headers: error.response?.headers,
+            userId: error.config?.url
         });
 
         if (error.response?.status === 401 || error.response?.status === 403) {
-            updateError.value = 'Session expired. Please log in again.';
+            updateError.value = 'Session expired or unauthorized. Please log in again.';
             authStore.logout();
             router.push('/login');
         } else if (error.response?.status === 404) {
-            updateError.value = 'User profile not found.';
-        } else if (!error.response) {
-            updateError.value = 'Network error. Please check your connection and try again.';
+            updateError.value = 'Profile not found. Please contact support or try logging in again.';
         } else {
             updateError.value = error.response?.data?.message || 'Failed to fetch profile data. Please try again.';
         }
@@ -655,7 +384,6 @@ const handleAvatarChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    console.log('Selected File:', file);
     if (!file.type.match('image.*')) {
         updateError.value = 'Please select an image file';
         return;
@@ -673,18 +401,16 @@ const handleAvatarChange = async (event) => {
     try {
         const formData = new FormData();
         formData.append('avatar', file);
-        console.log('Uploading avatar...');
 
-        const response = await apiClient.post('/users/avatar', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+        const response = await apiClient.patch('/user/uploadAvatar', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        console.log('Upload Response:', response.data);
-        user.value.avatar = response.data.avatar;
+        user.value.profileImage = response.data.profileImage;
         authStore.setAuthData({
             token: authStore.token,
-            user: { ...authStore.getUser, avatar: response.data.avatar },
-            rememberMe: !!localStorage.getItem('authToken'),
+            user: { ...authStore.getUser, profileImage: response.data.profileImage },
+            rememberMe: !!localStorage.getItem('authToken')
         });
 
         updateSuccess.value = 'Profile picture updated successfully';
@@ -692,7 +418,7 @@ const handleAvatarChange = async (event) => {
         console.error('Avatar upload error:', {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status,
+            status: error.response?.status
         });
         updateError.value = error.response?.data?.message || 'Failed to update profile picture. Please try again.';
     } finally {
@@ -708,22 +434,20 @@ const updatePersonalInfo = async () => {
     updateSuccess.value = '';
 
     try {
-        const response = await apiClient.patch('/users/update', {
+        const response = await apiClient.patch('/user/updateProfile', {
             firstName: personalInfo.value.firstName,
             lastName: personalInfo.value.lastName,
-            phone: personalInfo.value.phone,
-            position: personalInfo.value.position,
+            phone: personalInfo.value.phone
         });
 
         user.value.firstName = personalInfo.value.firstName;
         user.value.lastName = personalInfo.value.lastName;
         user.value.phone = personalInfo.value.phone;
-        user.value.position = personalInfo.value.position;
 
         authStore.setAuthData({
             token: authStore.token,
             user: { ...authStore.getUser, ...response.data },
-            rememberMe: !!localStorage.getItem('authToken'),
+            rememberMe: !!localStorage.getItem('authToken')
         });
 
         updateSuccess.value = 'Personal information updated successfully';
@@ -731,55 +455,9 @@ const updatePersonalInfo = async () => {
         console.error('Update personal info error:', {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status,
+            status: error.response?.status
         });
         updateError.value = error.response?.data?.message || 'Failed to update personal information. Please try again.';
-        if (error.response?.data?.errors) {
-            error.response.data.errors.forEach((err) => {
-                errors.value[err.param] = err.msg;
-            });
-        }
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const updateCompanyInfo = async () => {
-    if (!validateCompanyInfo()) return;
-
-    isLoading.value = true;
-    updateError.value = '';
-    updateSuccess.value = '';
-
-    try {
-        const response = await apiClient.patch('/users/update', {
-            company: companyInfo.value.name,
-            industry: companyInfo.value.industry,
-            size: companyInfo.value.size,
-            website: companyInfo.value.website,
-            address: companyInfo.value.address,
-        });
-
-        user.value.company = companyInfo.value.name;
-        user.value.industry = companyInfo.value.industry;
-        user.value.size = companyInfo.value.size;
-        user.value.website = companyInfo.value.website;
-        user.value.address = companyInfo.value.address;
-
-        authStore.setAuthData({
-            token: authStore.token,
-            user: { ...authStore.getUser, ...response.data },
-            rememberMe: !!localStorage.getItem('authToken'),
-        });
-
-        updateSuccess.value = 'Company information updated successfully';
-    } catch (error) {
-        console.error('Update company info error:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-        });
-        updateError.value = error.response?.data?.message || 'Failed to update company information. Please try again.';
         if (error.response?.data?.errors) {
             error.response.data.errors.forEach((err) => {
                 errors.value[err.param] = err.msg;
@@ -798,22 +476,23 @@ const updatePassword = async () => {
     updateSuccess.value = '';
 
     try {
-        await apiClient.patch('users/auth/change-password', {
+        await apiClient.patch('/user/changePassword', {
             currentPassword: passwordData.value.currentPassword,
             newPassword: passwordData.value.newPassword,
+            confirmNewPassword: passwordData.value.confirmPassword
         });
 
         updateSuccess.value = 'Password updated successfully';
         passwordData.value = {
             currentPassword: '',
             newPassword: '',
-            confirmPassword: '',
+            confirmPassword: ''
         };
     } catch (error) {
         console.error('Update password error:', {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status,
+            status: error.response?.status
         });
         updateError.value = error.response?.data?.message || 'Failed to update password. Please try again.';
         if (error.response?.data?.errors) {
@@ -821,36 +500,6 @@ const updatePassword = async () => {
                 errors.value[err.param] = err.msg;
             });
         }
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const updatePreferences = async () => {
-    isLoading.value = true;
-    updateError.value = '';
-    updateSuccess.value = '';
-
-    try {
-        const response = await apiClient.patch('/users/update', {
-            preferences: preferences.value,
-        });
-
-        user.value.preferences = preferences.value;
-        authStore.setAuthData({
-            token: authStore.token,
-            user: { ...authStore.getUser, ...response.data },
-            rememberMe: !!localStorage.getItem('authToken'),
-        });
-
-        updateSuccess.value = 'Preferences updated successfully';
-    } catch (error) {
-        console.error('Update preferences error:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-        });
-        updateError.value = error.response?.data?.message || 'Failed to update preferences. Please try again.';
     } finally {
         isLoading.value = false;
     }
@@ -868,9 +517,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* import profileview.css */
 @import "./profileview.css";
-
 
 .loading-state {
     text-align: center;

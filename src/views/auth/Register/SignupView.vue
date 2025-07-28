@@ -32,10 +32,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="company" class="form-label">Company Name</label>
-                    <input type="text" id="company" v-model="formData.company" class="form-input"
-                        :class="{ 'error': errors.company }" placeholder="Enter your company name" required />
-                    <span v-if="errors.company" class="error-message">{{ errors.company }}</span>
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" id="phone" v-model="formData.phone" class="form-input"
+                        :class="{ 'error': errors.phone }" placeholder="Enter your phone number" required />
+                    <span v-if="errors.phone" class="error-message">{{ errors.phone }}</span>
                 </div>
 
                 <div class="form-group">
@@ -132,9 +132,9 @@ const formData = ref({
     firstName: '',
     lastName: '',
     email: '',
-    company: '',
+    phone: '',
     password: '',
-    confirmPassword: '',
+    confirmPassword: ''
 });
 
 const errors = ref({});
@@ -164,7 +164,7 @@ const passwordStrength = computed(() => {
     if (/[a-z]/.test(password)) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+    if (/[!@#$%^&*]/.test(password)) strength += 1;
 
     return Math.min(strength, 5);
 });
@@ -213,9 +213,11 @@ const validateForm = () => {
         errors.value.email = 'Please enter a valid email address';
     }
 
-    // Company validation
-    if (!formData.value.company.trim()) {
-        errors.value.company = 'Company name is required';
+    // Phone validation
+    if (!formData.value.phone.trim()) {
+        errors.value.phone = 'Phone number is required';
+    } else if (!isValidPhone(formData.value.phone)) {
+        errors.value.phone = 'Please enter a valid phone number';
     }
 
     // Password validation
@@ -223,8 +225,14 @@ const validateForm = () => {
         errors.value.password = 'Password is required';
     } else if (formData.value.password.length < 8) {
         errors.value.password = 'Password must be at least 8 characters';
-    } else if (passwordStrength.value < 3) {
-        errors.value.password = 'Password is too weak. Use a mix of letters, numbers, and symbols';
+    } else if (!/[a-z]/.test(formData.value.password)) {
+        errors.value.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[A-Z]/.test(formData.value.password)) {
+        errors.value.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[0-9]/.test(formData.value.password)) {
+        errors.value.password = 'Password must contain at least one number';
+    } else if (!/[!@#$%^&*]/.test(formData.value.password)) {
+        errors.value.password = 'Password must contain at least one special character';
     }
 
     // Confirm password validation
@@ -245,6 +253,11 @@ const validateForm = () => {
 const isValidEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
+};
+
+const isValidPhone = (phone) => {
+    const regex = /^\+?[1-9]\d{1,14}$/;
+    return regex.test(phone);
 };
 
 const togglePasswordVisibility = () => {
@@ -270,9 +283,10 @@ const handleSignup = async () => {
             firstName: formData.value.firstName,
             lastName: formData.value.lastName,
             email: formData.value.email,
-            company: formData.value.company,
+            phone: formData.value.phone,
             password: formData.value.password,
-            role: 'driver', // Set role to admin
+            confirmPassword: formData.value.confirmPassword,
+            role: 'driver'
         });
 
         console.log('Signup response:', {
@@ -280,34 +294,22 @@ const handleSignup = async () => {
             data: response.data,
         });
 
-        // Verify response structure
-        if (!response.data || !response.data.token || !response.data.user) {
-            throw new Error('Invalid response structure from server');
-        }
-
-        // Update Pinia store with auth data
-        authStore.setAuthData({
-            token: response.data.token,
-            user: response.data.user,
-            rememberMe: true,
-        });
+        // Set success message
+        signupSuccess.value = 'Account created successfully! Redirecting to login...';
 
         // Emit signup success event
         emit('signup-success', {
             email: formData.value.email,
             firstName: formData.value.firstName,
             lastName: formData.value.lastName,
-            company: formData.value.company,
+            phone: formData.value.phone,
             subscribeNewsletter: subscribeNewsletter.value,
         });
 
-        // Set success message
-        signupSuccess.value = 'Account created successfully! Redirecting to dashboard...';
-
-        // Reset form and redirect after a brief delay
+        // Reset form and redirect to login after a brief delay
         setTimeout(() => {
             resetForm();
-            router.push('/');
+            router.push('/login');
         }, 2000);
     } catch (error) {
         console.error('Signup error:', {
@@ -325,6 +327,8 @@ const handleSignup = async () => {
             const { message, errors } = error.response.data;
             if (message === 'User already exists') {
                 signupError.value = 'An account with this email already exists.';
+            } else if (message === 'Phone number is already used') {
+                signupError.value = 'This phone number is already in use.';
             } else if (errors && Array.isArray(errors)) {
                 errors.forEach((err) => {
                     errors.value[err.param] = err.msg;
@@ -357,9 +361,9 @@ const resetForm = () => {
         firstName: '',
         lastName: '',
         email: '',
-        company: '',
+        phone: '',
         password: '',
-        confirmPassword: '',
+        confirmPassword: ''
     };
     agreeToTerms.value = false;
     subscribeNewsletter.value = false;
@@ -373,9 +377,9 @@ onMounted(() => {
     if (authStore.isAuthenticated) {
         const user = authStore.getUser;
         if (user && user.role === 'admin') {
-            router.push('/dashboard'); // Admin already logged in, redirect to dashboard
+            router.push('/dashboard');
         } else {
-            authStore.logout(); // Non-admin (e.g., driver), log out and redirect to login
+            authStore.logout();
             router.push('/login');
         }
     }

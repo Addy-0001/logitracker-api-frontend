@@ -23,7 +23,7 @@
                         <i :class="['fas fa-sync-alt', { 'fa-spin': isRefreshing }]"></i>
                         {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
                     </button>
-                    <button class="new-job-btn" @click="openNewJobModal">
+                    <button v-if="authStore.user?.role === 'admin'" class="new-job-btn" @click="openNewJobModal">
                         <i class="fas fa-plus"></i>
                         New Job
                     </button>
@@ -163,10 +163,10 @@
                     <div class="header-cell actions">Actions</div>
                 </div>
 
-                <div v-for="job in filteredJobs" :key="job.id" class="job-row"
+                <div v-for="job in filteredJobs" :key="job._id" class="job-row"
                     :class="{ 'urgent': job.priority === 'high', 'delayed': job.status === 'delayed' }">
                     <div class="job-cell job-id">
-                        <span class="job-id-text">{{ job.id }}</span>
+                        <span class="job-id-text">{{ job._id }}</span>
                         <span v-if="job.isUrgent" class="urgent-indicator">
                             <i class="fas fa-exclamation-circle"></i>
                         </span>
@@ -174,8 +174,8 @@
 
                     <div class="job-cell customer">
                         <div class="customer-info">
-                            <span class="customer-name">{{ job.customer }}</span>
-                            <span class="customer-contact">{{ job.contact }}</span>
+                            <span class="customer-name">{{ job.customerInfo.name }}</span>
+                            <span class="customer-contact">{{ job.customerInfo.email }}</span>
                         </div>
                     </div>
 
@@ -183,11 +183,11 @@
                         <div class="route-info">
                             <div class="route-from">
                                 <i class="fas fa-circle origin"></i>
-                                {{ job.origin }}
+                                {{ job.pickupInfo.city }}, {{ job.pickupInfo.state }}
                             </div>
                             <div class="route-to">
                                 <i class="fas fa-map-marker-alt destination"></i>
-                                {{ job.destination }}
+                                {{ job.dropoffInfo.city }}, {{ job.dropoffInfo.state }}
                             </div>
                         </div>
                     </div>
@@ -235,7 +235,8 @@
                             <button @click="contactCustomer(job)" class="action-btn contact" title="Contact">
                                 <i class="fas fa-phone"></i>
                             </button>
-                            <button @click="showJobMenu(job)" class="action-btn menu" title="More Options">
+                            <button v-if="authStore.user?.role === 'admin'" @click="showJobMenu(job)"
+                                class="action-btn menu" title="More Options">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                         </div>
@@ -245,11 +246,11 @@
 
             <!-- Grid View -->
             <div v-else-if="viewMode === 'grid'" class="jobs-grid">
-                <div v-for="job in filteredJobs" :key="job.id" class="job-card"
+                <div v-for="job in filteredJobs" :key="job._id" class="job-card"
                     :class="{ 'urgent': job.priority === 'high', 'delayed': job.status === 'delayed' }">
                     <div class="job-card-header">
                         <div class="job-id-section">
-                            <span class="job-id">{{ job.id }}</span>
+                            <span class="job-id">{{ job._id }}</span>
                             <span v-if="job.isUrgent" class="urgent-indicator">
                                 <i class="fas fa-exclamation-circle"></i>
                             </span>
@@ -264,21 +265,21 @@
 
                     <div class="job-card-content">
                         <div class="customer-section">
-                            <h4>{{ job.customer }}</h4>
-                            <p>{{ job.contact }}</p>
+                            <h4>{{ job.customerInfo.name }}</h4>
+                            <p>{{ job.customerInfo.email }}</p>
                         </div>
 
                         <div class="route-section">
                             <div class="route-item">
                                 <i class="fas fa-circle origin"></i>
-                                <span>{{ job.origin }}</span>
+                                <span>{{ job.pickupInfo.city }}, {{ job.pickupInfo.state }}</span>
                             </div>
                             <div class="route-arrow">
                                 <i class="fas fa-arrow-down"></i>
                             </div>
                             <div class="route-item">
                                 <i class="fas fa-map-marker-alt destination"></i>
-                                <span>{{ job.destination }}</span>
+                                <span>{{ job.dropoffInfo.city }}, {{ job.dropoffInfo.state }}</span>
                             </div>
                         </div>
 
@@ -317,7 +318,7 @@
         </div>
 
         <!-- Create Job Modal -->
-        <div v-if="showNewJobModal" class="modal-overlay" @click="closeNewJobModal">
+        <div v-if="showNewJobModal && authStore.user?.role === 'admin'" class="modal-overlay" @click="closeNewJobModal">
             <div class="modal-container" @click.stop>
                 <div class="modal-header">
                     <h2>Create New Job</h2>
@@ -338,7 +339,7 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="customerName" class="form-label">Customer Name *</label>
-                                    <input type="text" id="customerName" v-model="newJobForm.customer.name"
+                                    <input type="text" id="customerName" v-model="newJobForm.customerInfo.name"
                                         class="form-input" :class="{ 'error': newJobErrors.customerName }"
                                         placeholder="Enter customer name" />
                                     <span v-if="newJobErrors.customerName" class="error-message">{{
@@ -347,7 +348,7 @@
 
                                 <div class="form-group">
                                     <label for="customerCompany" class="form-label">Company</label>
-                                    <input type="text" id="customerCompany" v-model="newJobForm.customer.company"
+                                    <input type="text" id="customerCompany" v-model="newJobForm.customerInfo.company"
                                         class="form-input" placeholder="Enter company name" />
                                 </div>
                             </div>
@@ -355,7 +356,7 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="customerEmail" class="form-label">Email *</label>
-                                    <input type="email" id="customerEmail" v-model="newJobForm.customer.email"
+                                    <input type="email" id="customerEmail" v-model="newJobForm.customerInfo.email"
                                         class="form-input" :class="{ 'error': newJobErrors.customerEmail }"
                                         placeholder="Enter email address" />
                                     <span v-if="newJobErrors.customerEmail" class="error-message">{{
@@ -364,7 +365,7 @@
 
                                 <div class="form-group">
                                     <label for="customerPhone" class="form-label">Phone *</label>
-                                    <input type="tel" id="customerPhone" v-model="newJobForm.customer.phone"
+                                    <input type="tel" id="customerPhone" v-model="newJobForm.customerInfo.phone"
                                         class="form-input" :class="{ 'error': newJobErrors.customerPhone }"
                                         placeholder="Enter phone number" />
                                     <span v-if="newJobErrors.customerPhone" class="error-message">{{
@@ -382,7 +383,7 @@
 
                             <div class="form-group">
                                 <label for="pickupAddress" class="form-label">Address *</label>
-                                <input type="text" id="pickupAddress" v-model="newJobForm.pickup.address"
+                                <input type="text" id="pickupAddress" v-model="newJobForm.pickupInfo.address"
                                     class="form-input" :class="{ 'error': newJobErrors.pickupAddress }"
                                     placeholder="Enter pickup address" />
                                 <span v-if="newJobErrors.pickupAddress" class="error-message">{{
@@ -392,7 +393,7 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="pickupCity" class="form-label">City *</label>
-                                    <input type="text" id="pickupCity" v-model="newJobForm.pickup.city"
+                                    <input type="text" id="pickupCity" v-model="newJobForm.pickupInfo.city"
                                         class="form-input" :class="{ 'error': newJobErrors.pickupCity }"
                                         placeholder="Enter city" />
                                     <span v-if="newJobErrors.pickupCity" class="error-message">{{
@@ -401,15 +402,16 @@
 
                                 <div class="form-group">
                                     <label for="pickupState" class="form-label">State *</label>
-                                    <select id="pickupState" v-model="newJobForm.pickup.state" class="form-input"
+                                    <select id="pickupState" v-model="newJobForm.pickupInfo.state" class="form-input"
                                         :class="{ 'error': newJobErrors.pickupState }">
                                         <option value="" disabled>Select state</option>
-                                        <option value="AL">Alabama</option>
-                                        <option value="CA">California</option>
-                                        <option value="FL">Florida</option>
-                                        <option value="IL">Illinois</option>
-                                        <option value="NY">New York</option>
-                                        <option value="TX">Texas</option>
+                                        <option value="Bagmati">Bagmati</option>
+                                        <option value="Gandaki">Gandaki</option>
+                                        <option value="Lumbini">Lumbini</option>
+                                        <option value="Karnali">Karnali</option>
+                                        <option value="Sudurpashchim">Sudurpashchim</option>
+                                        <option value="Province No. 1">Province No. 1</option>
+                                        <option value="Province No. 2">Province No. 2</option>
                                     </select>
                                     <span v-if="newJobErrors.pickupState" class="error-message">{{
                                         newJobErrors.pickupState }}</span>
@@ -417,7 +419,7 @@
 
                                 <div class="form-group">
                                     <label for="pickupZipCode" class="form-label">Zip Code *</label>
-                                    <input type="text" id="pickupZipCode" v-model="newJobForm.pickup.zipCode"
+                                    <input type="text" id="pickupZipCode" v-model="newJobForm.pickupInfo.zipCode"
                                         class="form-input" :class="{ 'error': newJobErrors.pickupZipCode }"
                                         placeholder="Enter zip code" />
                                     <span v-if="newJobErrors.pickupZipCode" class="error-message">{{
@@ -428,20 +430,21 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="pickupContact" class="form-label">Contact Person</label>
-                                    <input type="text" id="pickupContact" v-model="newJobForm.pickup.contactPerson"
+                                    <input type="text" id="pickupContact" v-model="newJobForm.pickupInfo.contactPerson"
                                         class="form-input" placeholder="Enter contact person" />
                                 </div>
 
                                 <div class="form-group">
                                     <label for="pickupContactPhone" class="form-label">Contact Phone</label>
-                                    <input type="tel" id="pickupContactPhone" v-model="newJobForm.pickup.contactPhone"
-                                        class="form-input" placeholder="Enter contact phone" />
+                                    <input type="tel" id="pickupContactPhone"
+                                        v-model="newJobForm.pickupInfo.contactPhone" class="form-input"
+                                        placeholder="Enter contact phone" />
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label for="pickupInstructions" class="form-label">Special Instructions</label>
-                                <textarea id="pickupInstructions" v-model="newJobForm.pickup.instructions"
+                                <textarea id="pickupInstructions" v-model="newJobForm.pickupInfo.instructions"
                                     class="form-textarea" placeholder="Enter any special pickup instructions"
                                     rows="2"></textarea>
                             </div>
@@ -456,7 +459,7 @@
 
                             <div class="form-group">
                                 <label for="deliveryAddress" class="form-label">Address *</label>
-                                <input type="text" id="deliveryAddress" v-model="newJobForm.delivery.address"
+                                <input type="text" id="deliveryAddress" v-model="newJobForm.dropoffInfo.address"
                                     class="form-input" :class="{ 'error': newJobErrors.deliveryAddress }"
                                     placeholder="Enter delivery address" />
                                 <span v-if="newJobErrors.deliveryAddress" class="error-message">{{
@@ -466,7 +469,7 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="deliveryCity" class="form-label">City *</label>
-                                    <input type="text" id="deliveryCity" v-model="newJobForm.delivery.city"
+                                    <input type="text" id="deliveryCity" v-model="newJobForm.dropoffInfo.city"
                                         class="form-input" :class="{ 'error': newJobErrors.deliveryCity }"
                                         placeholder="Enter city" />
                                     <span v-if="newJobErrors.deliveryCity" class="error-message">{{
@@ -475,15 +478,16 @@
 
                                 <div class="form-group">
                                     <label for="deliveryState" class="form-label">State *</label>
-                                    <select id="deliveryState" v-model="newJobForm.delivery.state" class="form-input"
+                                    <select id="deliveryState" v-model="newJobForm.dropoffInfo.state" class="form-input"
                                         :class="{ 'error': newJobErrors.deliveryState }">
                                         <option value="" disabled>Select state</option>
-                                        <option value="AL">Alabama</option>
-                                        <option value="CA">California</option>
-                                        <option value="FL">Florida</option>
-                                        <option value="IL">Illinois</option>
-                                        <option value="NY">New York</option>
-                                        <option value="TX">Texas</option>
+                                        <option value="Bagmati">Bagmati</option>
+                                        <option value="Gandaki">Gandaki</option>
+                                        <option value="Lumbini">Lumbini</option>
+                                        <option value="Karnali">Karnali</option>
+                                        <option value="Sudurpashchim">Sudurpashchim</option>
+                                        <option value="Province No. 1">Province No. 1</option>
+                                        <option value="Province No. 2">Province No. 2</option>
                                     </select>
                                     <span v-if="newJobErrors.deliveryState" class="error-message">{{
                                         newJobErrors.deliveryState }}</span>
@@ -491,7 +495,7 @@
 
                                 <div class="form-group">
                                     <label for="deliveryZipCode" class="form-label">Zip Code *</label>
-                                    <input type="text" id="deliveryZipCode" v-model="newJobForm.delivery.zipCode"
+                                    <input type="text" id="deliveryZipCode" v-model="newJobForm.dropoffInfo.zipCode"
                                         class="form-input" :class="{ 'error': newJobErrors.deliveryZipCode }"
                                         placeholder="Enter zip code" />
                                     <span v-if="newJobErrors.deliveryZipCode" class="error-message">{{
@@ -502,21 +506,22 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="deliveryContact" class="form-label">Contact Person</label>
-                                    <input type="text" id="deliveryContact" v-model="newJobForm.delivery.contactPerson"
-                                        class="form-input" placeholder="Enter contact person" />
+                                    <input type="text" id="deliveryContact"
+                                        v-model="newJobForm.dropoffInfo.contactPerson" class="form-input"
+                                        placeholder="Enter contact person" />
                                 </div>
 
                                 <div class="form-group">
                                     <label for="deliveryContactPhone" class="form-label">Contact Phone</label>
                                     <input type="tel" id="deliveryContactPhone"
-                                        v-model="newJobForm.delivery.contactPhone" class="form-input"
+                                        v-model="newJobForm.dropoffInfo.contactPhone" class="form-input"
                                         placeholder="Enter contact phone" />
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label for="deliveryInstructions" class="form-label">Special Instructions</label>
-                                <textarea id="deliveryInstructions" v-model="newJobForm.delivery.instructions"
+                                <textarea id="deliveryInstructions" v-model="newJobForm.dropoffInfo.instructions"
                                     class="form-textarea" placeholder="Enter any special delivery instructions"
                                     rows="2"></textarea>
                             </div>
@@ -529,77 +534,17 @@
                                 Job Details
                             </h3>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="jobType" class="form-label">Job Type *</label>
-                                    <select id="jobType" v-model="newJobForm.jobDetails.type" class="form-input"
-                                        :class="{ 'error': newJobErrors.jobType }">
-                                        <option value="" disabled>Select job type</option>
-                                        <option value="delivery">Standard Delivery</option>
-                                        <option value="pickup">Pickup Only</option>
-                                        <option value="express">Express Delivery</option>
-                                        <option value="fragile">Fragile Items</option>
-                                        <option value="bulk">Bulk Transport</option>
-                                        <option value="same-day">Same Day Delivery</option>
-                                    </select>
-                                    <span v-if="newJobErrors.jobType" class="error-message">{{ newJobErrors.jobType
-                                        }}</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="jobPriority" class="form-label">Priority</label>
-                                    <select id="jobPriority" v-model="newJobForm.jobDetails.priority"
-                                        class="form-input">
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="scheduledDate" class="form-label">Scheduled Date *</label>
-                                    <input type="date" id="scheduledDate" v-model="newJobForm.jobDetails.scheduledDate"
-                                        class="form-input" :class="{ 'error': newJobErrors.scheduledDate }"
-                                        :min="new Date().toISOString().split('T')[0]" />
-                                    <span v-if="newJobErrors.scheduledDate" class="error-message">{{
-                                        newJobErrors.scheduledDate }}</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="scheduledTime" class="form-label">Scheduled Time *</label>
-                                    <input type="time" id="scheduledTime" v-model="newJobForm.jobDetails.scheduledTime"
-                                        class="form-input" :class="{ 'error': newJobErrors.scheduledTime }" />
-                                    <span v-if="newJobErrors.scheduledTime" class="error-message">{{
-                                        newJobErrors.scheduledTime }}</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="estimatedDuration" class="form-label">Estimated Duration (hours)</label>
-                                    <input type="number" id="estimatedDuration"
-                                        v-model.number="newJobForm.jobDetails.estimatedDuration" class="form-input"
-                                        placeholder="Enter estimated hours" min="0.5" step="0.5" />
-                                </div>
-                            </div>
-
                             <div class="form-group">
                                 <label class="form-label">Special Requirements</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-container">
-                                        <input type="checkbox" v-model="newJobForm.jobDetails.requiresSignature" />
-                                        <span class="checkmark"></span>
-                                        Requires Signature
-                                    </label>
-
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" v-model="newJobForm.jobDetails.fragileItems" />
+                                        <input type="checkbox" v-model="newJobForm.addOns.fragileItems" />
                                         <span class="checkmark"></span>
                                         Fragile Items
                                     </label>
 
                                     <label class="checkbox-container">
-                                        <input type="checkbox" v-model="newJobForm.jobDetails.heavyItems" />
+                                        <input type="checkbox" v-model="newJobForm.addOns.heavyItems" />
                                         <span class="checkmark"></span>
                                         Heavy Items (>50lbs)
                                     </label>
@@ -608,9 +553,8 @@
 
                             <div class="form-group">
                                 <label for="specialInstructions" class="form-label">Special Instructions</label>
-                                <textarea id="specialInstructions" v-model="newJobForm.jobDetails.specialInstructions"
-                                    class="form-textarea" placeholder="Enter any special instructions for this job"
-                                    rows="3"></textarea>
+                                <textarea id="specialInstructions" v-model="newJobForm.note" class="form-textarea"
+                                    placeholder="Enter any special instructions for this job" rows="3"></textarea>
                             </div>
                         </div>
 
@@ -641,21 +585,6 @@
                                         <p>{{ getDriverPhone(newJobForm.assignedTo) }}</p>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Notes -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-sticky-note"></i>
-                                Additional Notes
-                            </h3>
-
-                            <div class="form-group">
-                                <label for="jobNotes" class="form-label">Internal Notes</label>
-                                <textarea id="jobNotes" v-model="newJobForm.notes" class="form-textarea"
-                                    placeholder="Enter any internal notes or comments about this job"
-                                    rows="3"></textarea>
                             </div>
                         </div>
 
@@ -693,433 +622,540 @@
     </div>
 </template>
 
-<script>
-import "./homeview.css";
-import apiClient from '@/api/axios';
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import apiClient from '@/api/axios';
+import { jwtDecode } from 'jwt-decode';
+import { getRoute } from '@/api/orsService';
+import './homeview.css';
 
-export default {
-    name: 'Dashboard',
-    setup() {
-        const router = useRouter();
-        return { router };
+const router = useRouter();
+const authStore = useAuthStore();
+
+const currentDate = ref(new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+}));
+const isRefreshing = ref(false);
+const showNewJobModal = ref(false);
+const viewMode = ref('grid');
+const searchQuery = ref('');
+const selectedStatus = ref('');
+const selectedPriority = ref('');
+const selectedDateRange = ref('today');
+const ongoingJobs = ref([]);
+const isLoading = ref(false);
+const errorMessage = ref('');
+const availableDrivers = ref([]);
+const newJobForm = ref({
+    customerInfo: {
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
     },
-    data() {
-        return {
-            currentDate: new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }),
-            isRefreshing: false,
-            showNewJobModal: false,
-            viewMode: 'grid',
-            searchQuery: '',
-            selectedStatus: '',
-            selectedPriority: '',
-            selectedDateRange: 'today',
-            ongoingJobs: [],
-            isLoading: false,
-            errorMessage: '',
-            summaryStats: {
-                inTransit: 0,
-                pending: 0,
-                urgent: 0,
-                deliveredToday: 0
-            },
-            availableDrivers: [],
-            newJobForm: {
-                customer: {
-                    name: '',
-                    email: '',
-                    phone: '',
-                    company: ''
-                },
-                pickup: {
-                    address: '',
-                    city: '',
-                    state: '',
-                    zipCode: '',
-                    contactPerson: '',
-                    contactPhone: '',
-                    instructions: ''
-                },
-                delivery: {
-                    address: '',
-                    city: '',
-                    state: '',
-                    zipCode: '',
-                    contactPerson: '',
-                    contactPhone: '',
-                    instructions: ''
-                },
-                jobDetails: {
-                    type: '',
-                    priority: 'medium',
-                    scheduledDate: '',
-                    scheduledTime: '',
-                    estimatedDuration: null,
-                    specialInstructions: '',
-                    requiresSignature: false,
-                    fragileItems: false,
-                    heavyItems: false
-                },
-                assignedTo: '',
-                notes: ''
-            },
-            newJobErrors: {},
-            isCreatingJob: false,
-            createJobError: '',
-            createJobSuccess: ''
-        };
+    pickupInfo: {
+        address: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        contactPerson: '',
+        contactPhone: '',
+        instructions: '',
+        latitude: null,
+        longitude: null,
     },
-    computed: {
-        filteredJobs() {
-            return this.ongoingJobs;
+    dropoffInfo: {
+        address: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        contactPerson: '',
+        contactPhone: '',
+        instructions: '',
+        latitude: null,
+        longitude: null,
+    },
+    addOns: {
+        fragileItems: false,
+        heavyItems: false,
+    },
+    assignedTo: '',
+    note: '',
+});
+const newJobErrors = ref({});
+const isCreatingJob = ref(false);
+const createJobError = ref('');
+const createJobSuccess = ref('');
+
+const summaryStats = computed(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+        inTransit: ongoingJobs.value.filter((job) => job.status === 'in-transit').length,
+        pending: ongoingJobs.value.filter((job) => job.status === 'pending').length,
+        urgent: ongoingJobs.value.filter((job) => job.isUrgent).length,
+        deliveredToday: ongoingJobs.value.filter(
+            (job) =>
+                job.status === 'delivered' &&
+                new Date(job.createdAt).setHours(0, 0, 0, 0) === today.getTime()
+        ).length,
+    };
+});
+
+const filteredJobs = computed(() => {
+    let jobs = ongoingJobs.value;
+
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        jobs = jobs.filter(
+            (job) =>
+                job._id.toLowerCase().includes(query) ||
+                job.customerInfo.name.toLowerCase().includes(query) ||
+                job.pickupInfo.city.toLowerCase().includes(query) ||
+                job.dropoffInfo.city.toLowerCase().includes(query)
+        );
+    }
+
+    if (selectedStatus.value) {
+        jobs = jobs.filter((job) => job.status === selectedStatus.value);
+    }
+
+    if (selectedPriority.value) {
+        jobs = jobs.filter((job) => job.priority === selectedPriority.value);
+    }
+
+    if (selectedDateRange.value !== 'custom') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDateRange.value === 'today') {
+            jobs = jobs.filter(
+                (job) => new Date(job.createdAt).setHours(0, 0, 0, 0) === today.getTime()
+            );
+        } else if (selectedDateRange.value === 'week') {
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            jobs = jobs.filter((job) => new Date(job.createdAt) >= weekAgo);
+        } else if (selectedDateRange.value === 'month') {
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            jobs = jobs.filter((job) => new Date(job.createdAt) >= monthAgo);
         }
+    }
+
+    return jobs;
+});
+
+const mapJob = (job) => ({
+    _id: job._id,
+    customerInfo: {
+        name: job.customerInfo?.name || 'Unknown',
+        email: job.customerInfo?.email || 'N/A',
     },
-    async created() {
-        await Promise.all([
-            this.fetchJobs(),
-            this.fetchSummaryStats(),
-            this.fetchDrivers()
-        ]);
+    pickupInfo: {
+        city: job.pickupInfo?.city || 'Unknown',
+        state: job.pickupInfo?.state || 'Unknown',
+        latitude: job.pickupInfo?.latitude || null,
+        longitude: job.pickupInfo?.longitude || null,
     },
-    methods: {
-        mapJob(job) {
-            let jobDetails;
-            try {
-                jobDetails = typeof job.jobDetails === 'string' ? JSON.parse(job.jobDetails) : job.jobDetails;
-            } catch (e) {
-                console.error('Error parsing jobDetails:', e);
-                jobDetails = {
-                    type: 'unknown',
-                    priority: 'medium',
-                    scheduledDate: null,
-                    scheduledTime: '',
-                    estimatedDuration: null,
-                    specialInstructions: '',
-                    requiresSignature: false,
-                    fragileItems: false,
-                    heavyItems: false
-                };
-            }
-            return {
-                id: job._id,
-                customer: job.customer.name,
-                contact: job.customer.email,
-                origin: `${job.pickup.city}, ${job.pickup.state}`,
-                destination: `${job.delivery.city}, ${job.delivery.state}`,
-                status: job.status,
-                priority: jobDetails.priority,
-                progress: job.progress,
-                eta: job.eta || this.calculateETA(),
-                etaStatus: job.etaStatus,
-                isUrgent: job.isUrgent,
-                createdAt: job.createdAt
-            };
-        },
-        async fetchJobs() {
-            this.isLoading = true;
-            this.errorMessage = '';
-            try {
-                const response = await apiClient.get('/jobs', {
-                    params: {
-                        search: this.searchQuery || undefined,
-                        status: this.selectedStatus || undefined,
-                        priority: this.selectedPriority || undefined
-                    }
-                });
-                console.log('GET /jobs response:', response.data, 'Length:', response.data.length);
-                this.ongoingJobs = response.data.map(this.mapJob);
-            } catch (error) {
-                console.error('Error fetching jobs:', error);
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    this.errorMessage = 'Session expired. Please log in again.';
-                    this.router.push('/login');
-                } else {
-                    this.errorMessage = error.response?.data?.message || 'Failed to load jobs. Please try again.';
-                }
-            } finally {
-                this.isLoading = false;
-            }
-        },
-        async fetchSummaryStats() {
-            try {
-                const response = await apiClient.get('/jobs/summary');
-                this.summaryStats = response.data;
-            } catch (error) {
-                console.error('Error fetching summary stats:', error);
-                this.errorMessage = error.response?.data?.message || 'Failed to load summary stats.';
-            }
-        },
-        async fetchDrivers() {
-            try {
-                const response = await apiClient.get('/users/users', {
-                    params: {
-                        role: 'driver',
-                        status: 'active'
-                    }
-                });
-                this.availableDrivers = response.data;
-            } catch (error) {
-                console.error('Error fetching drivers:', error);
-                this.errorMessage = error.response?.data?.message || 'Failed to load drivers. Please try again.';
-            }
-        },
-        async refreshData() {
-            this.isRefreshing = true;
-            try {
-                await Promise.all([
-                    this.fetchJobs(),
-                    this.fetchSummaryStats(),
-                    this.fetchDrivers()
-                ]);
-            } finally {
-                this.isRefreshing = false;
-            }
-        },
-        clearSearch() {
-            this.searchQuery = '';
-            this.fetchJobs();
-        },
-        clearFilters() {
-            this.searchQuery = '';
-            this.selectedStatus = '';
-            this.selectedPriority = '';
-            this.selectedDateRange = 'today';
-            this.fetchJobs();
-        },
-        getStatusIcon(status) {
-            const icons = {
-                'pending': 'fas fa-clock',
-                'in-transit': 'fas fa-truck',
-                'delayed': 'fas fa-exclamation-triangle',
-                'delivered': 'fas fa-check-circle'
-            };
-            return icons[status] || 'fas fa-circle';
-        },
-        formatStatus(status) {
-            return status.split('-').map(word =>
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
-        },
-        getETAStatus(status) {
-            return status ? status.toLowerCase() : '';
-        },
-        viewJobDetails(job) {
-            this.router.push(`/job/${job.id}`);
-        },
-        trackJob(job) {
-            console.log('Tracking job:', job.id);
-        },
-        contactCustomer(job) {
-            console.log('Contacting customer for job:', job.id);
-        },
-        showJobMenu(job) {
-            console.log('Showing menu for job:', job.id);
-        },
-        openNewJobModal() {
-            this.showNewJobModal = true;
-            this.resetNewJobForm();
-        },
-        closeNewJobModal() {
-            this.showNewJobModal = false;
-            this.resetNewJobForm();
-        },
-        resetNewJobForm() {
-            this.newJobForm = {
-                customer: {
-                    name: '',
-                    email: '',
-                    phone: '',
-                    company: ''
+    dropoffInfo: {
+        city: job.dropoffInfo?.city || 'Unknown',
+        state: job.dropoffInfo?.state || 'N/A',
+        latitude: job.dropoffInfo?.latitude || null,
+        longitude: job.dropoffInfo?.longitude || null,
+    },
+    status: job.status || 'pending',
+    priority: job.isUrgent ? 'high' : 'medium',
+    progress: 0, // Placeholder; backend does not provide
+    eta: calculateETA(job), // Computed ETA
+    isUrgent: job.isUrgent || false,
+    etaStatus: 'on-time', // Static fallback
+    createdAt: job.createdAt || new Date().toISOString(),
+});
+
+const fetchJobs = async () => {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+        const token = authStore.token;
+        if (!token) throw new Error('No authentication token');
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken.id;
+        const role = decodedToken.role;
+
+        let response;
+        if (role === 'driver') {
+            response = await apiClient.get(`/job/getJobForDriver/${userId}`, {
+                params: {
+                    search: searchQuery.value || undefined,
+                    status: selectedStatus.value || undefined,
                 },
-                pickup: {
-                    address: '',
-                    city: '',
-                    state: '',
-                    zipCode: '',
-                    contactPerson: '',
-                    contactPhone: '',
-                    instructions: ''
+            });
+        } else {
+            response = await apiClient.get('/job', {
+                params: {
+                    search: searchQuery.value || undefined,
+                    status: selectedStatus.value || undefined,
                 },
-                delivery: {
-                    address: '',
-                    city: '',
-                    state: '',
-                    zipCode: '',
-                    contactPerson: '',
-                    contactPhone: '',
-                    instructions: ''
-                },
-                jobDetails: {
-                    type: '',
-                    priority: 'medium',
-                    scheduledDate: '',
-                    scheduledTime: '',
-                    estimatedDuration: null,
-                    specialInstructions: '',
-                    requiresSignature: false,
-                    fragileItems: false,
-                    heavyItems: false
-                },
-                assignedTo: '',
-                notes: ''
-            };
-            this.newJobErrors = {};
-            this.createJobError = '';
-            this.createJobSuccess = '';
+            });
+        }
+        ongoingJobs.value = Array.isArray(response.data) ? response.data.map(mapJob) : [];
+    } catch (error) {
+        console.error('Error fetching jobs:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            errorMessage.value = 'Session expired. Please log in again.';
+            authStore.logout();
+            router.push('/login');
+        } else {
+            errorMessage.value = error.response?.data?.message || 'Failed to load jobs. Please try again.';
+        }
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const fetchDrivers = async () => {
+    if (authStore.user?.role !== 'admin') return;
+    try {
+        const response = await apiClient.get('/user/getUsers', {
+            params: { role: 'driver' },
+        });
+        availableDrivers.value = Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Error fetching drivers:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
+        errorMessage.value = error.response?.data?.message || 'Failed to load drivers. Please try again.';
+    }
+};
+
+const refreshData = async () => {
+    isRefreshing.value = true;
+    try {
+        await Promise.all([fetchJobs(), fetchDrivers()]);
+    } finally {
+        isRefreshing.value = false;
+    }
+};
+
+const clearSearch = () => {
+    searchQuery.value = '';
+    fetchJobs();
+};
+
+const clearFilters = () => {
+    searchQuery.value = '';
+    selectedStatus.value = '';
+    selectedPriority.value = '';
+    selectedDateRange.value = 'today';
+    fetchJobs();
+};
+
+const getStatusIcon = (status) => {
+    const icons = {
+        pending: 'fas fa-clock',
+        'in-transit': 'fas fa-truck',
+        delayed: 'fas fa-exclamation-triangle',
+        delivered: 'fas fa-check-circle',
+        cancelled: 'fas fa-times-circle',
+    };
+    return icons[status] || 'fas fa-circle';
+};
+
+const formatStatus = (status) => {
+    return status
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const getETAStatus = (status) => {
+    return status ? status.toLowerCase() : '';
+};
+
+const viewJobDetails = (job) => {
+    router.push(`/job/${job._id}`);
+};
+
+const trackJob = async (job) => {
+    try {
+        const response = await apiClient.get(`/coordinate/getAllCoord/${job._id}`);
+        console.log('Tracking job:', job._id, 'Coordinates:', response.data);
+        // Implement tracking logic (e.g., redirect to Tracking.vue)
+    } catch (error) {
+        console.error('Error tracking job:', error);
+        errorMessage.value = error.response?.data?.message || 'Failed to track job.';
+    }
+};
+
+const contactCustomer = (job) => {
+    console.log('Contacting customer for job:', job._id);
+    // Implement contact logic (e.g., open mailto or tel link)
+};
+
+const showJobMenu = (job) => {
+    console.log('Showing menu for job:', job._id);
+    // Implement job menu logic
+};
+
+const openNewJobModal = () => {
+    showNewJobModal.value = true;
+    resetNewJobForm();
+};
+
+const closeNewJobModal = () => {
+    showNewJobModal.value = false;
+    resetNewJobForm();
+};
+
+const resetNewJobForm = () => {
+    newJobForm.value = {
+        customerInfo: {
+            name: '',
+            email: '',
+            phone: '',
+            company: '',
         },
-        validateNewJobForm() {
-            this.newJobErrors = {};
-            if (!this.newJobForm.customer.name.trim()) {
-                this.newJobErrors.customerName = 'Customer name is required';
-            }
-            if (!this.newJobForm.customer.email.trim()) {
-                this.newJobErrors.customerEmail = 'Customer email is required';
-            } else if (!this.isValidEmail(this.newJobForm.customer.email)) {
-                this.newJobErrors.customerEmail = 'Please enter a valid email address';
-            }
-            if (!this.newJobForm.customer.phone.trim()) {
-                this.newJobErrors.customerPhone = 'Customer phone is required';
-            }
-            if (!this.newJobForm.pickup.address.trim()) {
-                this.newJobErrors.pickupAddress = 'Pickup address is required';
-            }
-            if (!this.newJobForm.pickup.city.trim()) {
-                this.newJobErrors.pickupCity = 'Pickup city is required';
-            }
-            if (!this.newJobForm.pickup.state.trim()) {
-                this.newJobErrors.pickupState = 'Pickup state is required';
-            }
-            if (!this.newJobForm.pickup.zipCode.trim()) {
-                this.newJobErrors.pickupZipCode = 'Pickup zip code is required';
-            }
-            if (!this.newJobForm.delivery.address.trim()) {
-                this.newJobErrors.deliveryAddress = 'Delivery address is required';
-            }
-            if (!this.newJobForm.delivery.city.trim()) {
-                this.newJobErrors.deliveryCity = 'Delivery city is required';
-            }
-            if (!this.newJobForm.delivery.state.trim()) {
-                this.newJobErrors.deliveryState = 'Delivery state is required';
-            }
-            if (!this.newJobForm.delivery.zipCode.trim()) {
-                this.newJobErrors.deliveryZipCode = 'Delivery zip code is required';
-            }
-            if (!this.newJobForm.jobDetails.type) {
-                this.newJobErrors.jobType = 'Job type is required';
-            }
-            if (!this.newJobForm.jobDetails.scheduledDate) {
-                this.newJobErrors.scheduledDate = 'Scheduled date is required';
-            }
-            if (!this.newJobForm.jobDetails.scheduledTime) {
-                this.newJobErrors.scheduledTime = 'Scheduled time is required';
-            }
-            if (!this.newJobForm.assignedTo) {
-                this.newJobErrors.assignedTo = 'Please assign a driver';
-            }
-            return Object.keys(this.newJobErrors).length === 0;
+        pickupInfo: {
+            address: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            contactPerson: '',
+            contactPhone: '',
+            instructions: '',
+            latitude: null,
+            longitude: null,
         },
-        isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
+        dropoffInfo: {
+            address: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            contactPerson: '',
+            contactPhone: '',
+            instructions: '',
+            latitude: null,
+            longitude: null,
         },
-        parseValidationErrors(error) {
-            if (error.response?.data?.error?.includes('validation failed')) {
-                const errors = {};
-                const errorDetails = error.response.data.error.match(/([^:]+): ([^,]+)/g);
-                if (errorDetails) {
-                    errorDetails.forEach(detail => {
-                        const [, field, message] = detail.match(/([^:]+): (.+)/);
-                        if (field.includes('jobDetails')) {
-                            errors.jobDetails = message;
-                        } else if (field.includes('assignedTo')) {
-                            errors.assignedTo = message;
-                        } else {
-                            errors[field] = message;
-                        }
-                    });
-                }
-                return errors;
-            }
-            return null;
+        addOns: {
+            fragileItems: false,
+            heavyItems: false,
         },
-        async createNewJob() {
-            if (!this.validateNewJobForm()) {
-                return;
-            }
-            this.isCreatingJob = true;
-            this.createJobError = '';
-            this.createJobSuccess = '';
-            try {
-                const jobData = {
-                    ...this.newJobForm,
-                    jobDetails: JSON.stringify(this.newJobForm.jobDetails)
-                };
-                const response = await apiClient.post('/jobs', jobData);
-                const newJob = response.data;
-                await this.fetchJobs();
-                await this.fetchSummaryStats();
-                const assignedDriver = this.availableDrivers.find(d => d._id === newJob.assignedTo);
-                this.createJobSuccess = `Job ${newJob._id} created successfully and assigned to ${assignedDriver ? `${assignedDriver.firstName} ${assignedDriver.lastName}` : 'Unassigned'}`;
-                setTimeout(() => {
-                    this.closeNewJobModal();
-                }, 2000);
-            } catch (error) {
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    this.createJobError = 'Session expired. Please log in again.';
-                    this.router.push('/login');
-                } else {
-                    const validationErrors = this.parseValidationErrors(error);
-                    if (validationErrors) {
-                        this.newJobErrors = { ...this.newJobErrors, ...validationErrors };
-                        this.createJobError = 'Please correct the errors in the form.';
-                    } else {
-                        this.createJobError = error.response?.data?.error || error.response?.data?.message || 'Failed to create job. Please try again.';
-                    }
-                }
-                console.error('Error creating job:', error);
-            } finally {
-                this.isCreatingJob = false;
-            }
-        },
-        calculateETA() {
-            const now = new Date();
-            const hoursToAdd = Math.floor(Math.random() * 4) + 4;
-            const eta = new Date(now.getTime() + (hoursToAdd * 60 * 60 * 1000));
+        assignedTo: '',
+        note: '',
+    };
+    newJobErrors.value = {};
+    createJobError.value = '';
+    createJobSuccess.value = '';
+};
+
+const validateNewJobForm = () => {
+    newJobErrors.value = {};
+    if (!newJobForm.value.customerInfo.name.trim()) {
+        newJobErrors.value.customerName = 'Customer name is required';
+    }
+    if (!newJobForm.value.customerInfo.email.trim()) {
+        newJobErrors.value.customerEmail = 'Customer email is required';
+    } else if (!isValidEmail(newJobForm.value.customerInfo.email)) {
+        newJobErrors.value.customerEmail = 'Please enter a valid email address';
+    }
+    if (!newJobForm.value.customerInfo.phone.trim()) {
+        newJobErrors.value.customerPhone = 'Customer phone is required';
+    } else if (!isValidPhone(newJobForm.value.customerInfo.phone)) {
+        newJobErrors.value.customerPhone = 'Please enter a valid Nepal phone number (+977 followed by 9 digits)';
+    }
+    if (!newJobForm.value.pickupInfo.address.trim()) {
+        newJobErrors.value.pickupAddress = 'Pickup address is required';
+    }
+    if (!newJobForm.value.pickupInfo.city.trim()) {
+        newJobErrors.value.pickupCity = 'Pickup city is required';
+    }
+    if (!newJobForm.value.pickupInfo.state.trim()) {
+        newJobErrors.value.pickupState = 'Pickup state is required';
+    }
+    if (!newJobForm.value.pickupInfo.zipCode.trim()) {
+        newJobErrors.value.pickupZipCode = 'Pickup zip code is required';
+    }
+    if (!newJobForm.value.pickupInfo.latitude || !newJobForm.value.pickupInfo.longitude) {
+        newJobErrors.value.pickupCoords = 'Pickup coordinates are required';
+    }
+    if (!newJobForm.value.dropoffInfo.address.trim()) {
+        newJobErrors.value.deliveryAddress = 'Delivery address is required';
+    }
+    if (!newJobForm.value.dropoffInfo.city.trim()) {
+        newJobErrors.value.deliveryCity = 'Delivery city is required';
+    }
+    if (!newJobForm.value.dropoffInfo.state.trim()) {
+        newJobErrors.value.deliveryState = 'Delivery state is required';
+    }
+    if (!newJobForm.value.dropoffInfo.zipCode.trim()) {
+        newJobErrors.value.deliveryZipCode = 'Delivery zip code is required';
+    }
+    if (!newJobForm.value.dropoffInfo.latitude || !newJobForm.value.dropoffInfo.longitude) {
+        newJobErrors.value.dropoffCoords = 'Delivery coordinates are required';
+    }
+    if (!newJobForm.value.assignedTo) {
+        newJobErrors.value.assignedTo = 'Please assign a driver';
+    }
+    return Object.keys(newJobErrors.value).length === 0;
+};
+
+const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+const isValidPhone = (phone) => {
+    const phoneRegex = /^\+977[1-9]\d{8}$/;
+    return phoneRegex.test(phone);
+};
+
+// Placeholder geocoding function (replace with actual ORS or MapTiler geocoding API)
+const geocodeAddress = async (address, city, state) => {
+    // Mock implementation; replace with actual geocoding API call
+    const mockCoords = {
+        latitude: 27.7172, // Kathmandu default
+        longitude: 85.3240,
+    };
+    return mockCoords;
+};
+
+const calculateETA = async (job) => {
+    try {
+        if (job.pickupInfo.latitude && job.pickupInfo.longitude && job.dropoffInfo.latitude && job.dropoffInfo.longitude) {
+            const route = await getRoute(
+                [job.pickupInfo.longitude, job.pickupInfo.latitude],
+                [job.dropoffInfo.longitude, job.dropoffInfo.latitude]
+            );
+            const durationSeconds = route.features[0].properties.summary.duration;
+            const eta = new Date(Date.now() + durationSeconds * 1000);
             return eta.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
-                hour12: true
+                hour12: true,
             });
-        },
-        getDriverName(driverId) {
-            const driver = this.availableDrivers.find(d => d._id === driverId);
-            return driver ? `${driver.firstName} ${driver.lastName}` : 'Unknown';
-        },
-        getDriverPhone(driverId) {
-            const driver = this.availableDrivers.find(d => d._id === driverId);
-            return driver ? driver.phone : 'N/A';
         }
-    },
-    watch: {
-        searchQuery: function () {
-            this.fetchJobs();
-        },
-        selectedStatus: function () {
-            this.fetchJobs();
-        },
-        selectedPriority: function () {
-            this.fetchJobs();
-        },
-        selectedDateRange: function () {
-            this.fetchJobs();
-        }
+        return 'N/A';
+    } catch (error) {
+        console.error('Error calculating ETA:', error);
+        return 'N/A';
     }
 };
+
+const parseValidationErrors = (error) => {
+    if (error.response?.data?.errors) {
+        const errors = {};
+        error.response.data.errors.forEach((err) => {
+            const field = err.param.split('.').pop();
+            errors[field] = err.msg;
+        });
+        return errors;
+    }
+    return null;
+};
+
+const createNewJob = async () => {
+    // Geocode addresses to get coordinates
+    try {
+        const pickupCoords = await geocodeAddress(
+            newJobForm.value.pickupInfo.address,
+            newJobForm.value.pickupInfo.city,
+            newJobForm.value.pickupInfo.state
+        );
+        const dropoffCoords = await geocodeAddress(
+            newJobForm.value.dropoffInfo.address,
+            newJobForm.value.dropoffInfo.city,
+            newJobForm.value.dropoffInfo.state
+        );
+        newJobForm.value.pickupInfo.latitude = pickupCoords.latitude;
+        newJobForm.value.pickupInfo.longitude = pickupCoords.longitude;
+        newJobForm.value.dropoffInfo.latitude = dropoffCoords.latitude;
+        newJobForm.value.dropoffInfo.longitude = dropoffCoords.longitude;
+    } catch (error) {
+        console.error('Error geocoding addresses:', error);
+        newJobErrors.value.geocoding = 'Failed to fetch coordinates for addresses.';
+        return;
+    }
+
+    if (!validateNewJobForm()) return;
+    isCreatingJob.value = true;
+    createJobError.value = '';
+    createJobSuccess.value = '';
+    try {
+        const jobData = {
+            customerInfo: newJobForm.value.customerInfo,
+            pickupInfo: newJobForm.value.pickupInfo,
+            dropoffInfo: newJobForm.value.dropoffInfo,
+            addOns: newJobForm.value.addOns,
+            assignedTo: newJobForm.value.assignedTo,
+            note: newJobForm.value.note,
+        };
+        const response = await apiClient.post('/job/createJob', jobData);
+        const newJob = response.data.job;
+        await fetchJobs();
+        const assignedDriver = availableDrivers.value.find((d) => d._id === newJob.assignedTo);
+        createJobSuccess.value = `Job ${newJob._id} created successfully and assigned to ${assignedDriver ? `${assignedDriver.firstName} ${assignedDriver.lastName}` : 'Unassigned'
+            }`;
+        setTimeout(() => {
+            closeNewJobModal();
+        }, 2000);
+    } catch (error) {
+        console.error('Error creating job:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+        });
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            createJobError.value = 'Unauthorized. Only admins can create jobs.';
+            authStore.logout();
+            router.push('/login');
+        } else if (error.response?.status === 400) {
+            const validationErrors = parseValidationErrors(error);
+            if (validationErrors) {
+                newJobErrors.value = { ...newJobErrors.value, ...validationErrors };
+                createJobError.value = 'Please correct the errors in the form.';
+            } else {
+                createJobError.value = error.response?.data?.message || 'Failed to create job. Please try again.';
+            }
+        } else {
+            createJobError.value = error.response?.data?.message || 'Failed to create job. Please try again.';
+        }
+    } finally {
+        isCreatingJob.value = false;
+    }
+};
+
+const getDriverName = (driverId) => {
+    const driver = availableDrivers.value.find((d) => d._id === driverId);
+    return driver ? `${driver.firstName} ${driver.lastName}` : 'Unknown';
+};
+
+const getDriverPhone = (driverId) => {
+    const driver = availableDrivers.value.find((d) => d._id === driverId);
+    return driver ? driver.phone : 'N/A';
+};
+
+onMounted(async () => {
+    if (!authStore.isAuthenticated) {
+        errorMessage.value = 'Please log in to view the dashboard.';
+        router.push('/login');
+        return;
+    }
+    await Promise.all([fetchJobs(), fetchDrivers()]);
+});
+
+watch([searchQuery, selectedStatus, selectedPriority, selectedDateRange], () => {
+    fetchJobs();
+});
 </script>
 
 <style scoped>
