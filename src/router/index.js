@@ -8,6 +8,7 @@ import Tracking from '@/views/core/Tracking/Tracking.vue';
 import { useAuthStore } from '@/stores/auth';
 import JobDetails from '@/views/core/JobDetails/JobDetails.vue';
 import CreateJobView from '@/views/core/Home/CreateJobView.vue';
+import UserProfile from '@/views/core/User/UserProfile.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -67,6 +68,12 @@ const router = createRouter({
       path: '/users',
       name: 'users',
       component: Shipment,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/users/:id',
+      name: 'user-details',
+      component: UserProfile,
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {

@@ -310,14 +310,6 @@
                                     </select>
                                     <span v-if="userErrors.role" class="error-message">{{ userErrors.role }}</span>
                                 </div>
-
-                                <div class="form-group">
-                                    <label for="company" class="form-label">Company</label>
-                                    <input type="text" id="company" v-model="userForm.company" class="form-input"
-                                        :class="{ 'error': userErrors.company }" placeholder="Enter company name" />
-                                    <span v-if="userErrors.company" class="error-message">{{ userErrors.company
-                                        }}</span>
-                                </div>
                             </div>
                         </div>
 
@@ -762,7 +754,7 @@ const saveUser = async () => {
 };
 
 const viewUserProfile = user => {
-    router.push(`/profile/${user._id}`);
+    router.push(`/users/${user._id}`);
 };
 
 const showUserMenu = user => {

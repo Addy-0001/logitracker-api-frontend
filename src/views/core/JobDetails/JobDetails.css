@@ -1,207 +1,1107 @@
+/* Job Details Styles */
 .job-details-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Loading and Error States */
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+}
+
+.loading-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top: 3px solid #720707;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-ring:nth-child(2) {
+    animation-delay: 0.1s;
+    border-top-color: #dc2626;
+}
+
+.spinner-ring:nth-child(3) {
+    animation-delay: 0.2s;
+    border-top-color: #f87171;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.error-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626;
+    font-size: 2rem;
+}
+
+.retry-btn {
+    background: linear-gradient(135deg, #720707, #dc2626);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.retry-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(114, 7, 7, 0.3);
+}
+
+/* Job Header */
 .job-header {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.job-header h1 {
-    font-size: 24px;
-    color: #333;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
 }
 
 .back-btn {
-    padding: 8px 16px;
-    background: #1976d2;
-    color: white;
+    background: #f3f4f6;
+    color: #374151;
     border: none;
-    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
     cursor: pointer;
-    display: flex;
+    transition: all 0.2s ease;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .back-btn:hover {
-    background: #1565c0;
+    background: #e5e7eb;
+    transform: translateY(-1px);
 }
 
-.details-sections {
+.job-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #720707, #dc2626);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.job-id-section {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
+    align-items: center;
+    gap: 1rem;
 }
 
-.details-section {
-    background: #fff;
+.job-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: #374151;
+    background: #f3f4f6;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
 }
 
-.section-title {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 15px;
-    display: flex;
+.urgent-badge {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.details-grid {
+.status-section {
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.status-badge.pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.in-transit {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.status-badge.delivered {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.status-badge.delayed {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.track-btn,
+.contact-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.track-btn {
+    background: linear-gradient(135deg, #720707, #dc2626);
+    color: white;
+}
+
+.track-btn.active {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.track-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(114, 7, 7, 0.3);
+}
+
+.contact-btn {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.contact-btn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+/* Main Content Grid */
+.main-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    align-items: start;
 }
 
-.detail-item {
+/* Left Panel */
+.left-panel {
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
 }
 
-.detail-item.full-width {
-    grid-column: 1 / -1;
+/* Info Cards */
+.info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
 }
 
-.detail-item label {
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 5px;
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.detail-item span {
-    color: #333;
-}
-
-.progress-container {
+.card-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.card-icon.customer {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.card-icon.driver {
+    background: linear-gradient(135deg, #720707, #dc2626);
+}
+
+.card-icon.route {
+    background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.card-icon.progress {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.card-icon.additional {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+.card-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Customer Card */
+.customer-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.customer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.customer-info h4 {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+    font-size: 1.125rem;
+}
+
+.customer-email,
+.customer-phone {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Driver Card */
+.driver-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.driver-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #720707, #dc2626);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.driver-info h4 {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+    font-size: 1.125rem;
+}
+
+.driver-phone {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.driver-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.driver-status.online {
+    color: #16a34a;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.driver-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.driver-action-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: 2px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.driver-action-btn:hover {
+    border-color: #720707;
+    color: #720707;
+    transform: translateY(-1px);
+}
+
+/* Route Card */
+.route-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.route-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.point-marker {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+}
+
+.route-point.pickup .point-marker {
+    color: #10b981;
+    font-size: 1.25rem;
+}
+
+.route-point.delivery .point-marker {
+    color: #ef4444;
+    font-size: 1.25rem;
+}
+
+.point-info {
+    flex: 1;
+}
+
+.point-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.point-address {
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.point-contact {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.route-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+    position: relative;
+}
+
+.connector-line {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, #10b981, #ef4444);
+    border-radius: 1px;
+}
+
+.distance-info {
+    position: absolute;
+    right: 0;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+}
+
+/* Progress Card */
+.progress-overview {
+    margin-bottom: 2rem;
+}
+
+.progress-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.progress-percentage {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #720707;
+}
+
+.progress-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.progress-bar-container {
+    width: 100%;
 }
 
 .progress-bar {
-    flex: 1;
-    height: 10px;
-    background: #e0e0e0;
-    border-radius: 5px;
+    height: 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
+    border-radius: 6px;
     transition: width 0.3s ease;
 }
 
-.progress-fill.in-transit {
-    background: #1976d2;
-}
-
 .progress-fill.pending {
-    background: #f57c00;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
-.progress-fill.delayed {
-    background: #d32f2f;
+.progress-fill.in-transit {
+    background: linear-gradient(90deg, #720707, #dc2626);
 }
 
 .progress-fill.delivered {
-    background: #388e3c;
+    background: linear-gradient(90deg, #10b981, #34d399);
 }
 
-.progress-text {
-    font-size: 14px;
-    color: #333;
+.progress-fill.delayed {
+    background: linear-gradient(90deg, #ef4444, #f87171);
 }
 
-.status-badge {
-    padding: 5px 10px;
-    border-radius: 12px;
+.progress-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    width: 2px;
+    height: calc(100% + 1rem);
+    background: #e5e7eb;
+}
+
+.timeline-item.completed::after {
+    background: #720707;
+}
+
+.timeline-marker {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #720707;
+}
+
+.timeline-item.completed .timeline-marker::after {
+    content: '✓';
     color: white;
-    font-size: 14px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.timeline-content h5 {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content p {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.timeline-content p.pending {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Additional Information Card */
+.additional-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #374151;
+    min-width: 120px;
+}
+
+.detail-value {
+    color: #6b7280;
+    flex: 1;
+}
+
+.addons-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.addon-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 0.25rem;
 }
 
-.status-badge.pending {
-    background: #f57c00;
+.addon-tag.fragile {
+    background: #fee2e2;
+    color: #dc2626;
 }
 
-.status-badge.in-transit {
-    background: #1976d2;
+.addon-tag.heavy {
+    background: #fef3c7;
+    color: #d97706;
 }
 
-.status-badge.delayed {
-    background: #d32f2f;
+.addon-tag.none {
+    background: #f3f4f6;
+    color: #6b7280;
 }
 
-.status-badge.delivered {
-    background: #388e3c;
+/* Right Panel - Map */
+.right-panel {
+    position: sticky;
+    top: 2rem;
 }
 
-.priority-badge {
-    padding: 5px 10px;
-    border-radius: 12px;
-    color: white;
-    font-size: 14px;
+.map-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.priority-badge.high {
-    background: #d32f2f;
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
 }
 
-.priority-badge.medium {
-    background: #f57c00;
+.map-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.priority-badge.low {
-    background: #388e3c;
+.map-controls {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.eta-status.on-time {
-    color: #388e3c;
-}
-
-.eta-status.delayed {
-    color: #d32f2f;
-}
-
-.loading-state,
-.error-state {
-    text-align: center;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    margin: 20px 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.loading-state i,
-.error-state i {
-    font-size: 24px;
-    margin-right: 10px;
-}
-
-.error-state {
-    color: #d32f2f;
-}
-
-.retry-btn {
-    margin-top: 10px;
-    padding: 8px 16px;
-    background: #1976d2;
-    color: white;
+.map-control-btn {
+    width: 36px;
+    height: 36px;
     border: none;
-    border-radius: 4px;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.retry-btn:hover {
-    background: #1565c0;
+.map-control-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+    transform: translateY(-1px);
+}
+
+.map-control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.map-container {
+    position: relative;
+    height: 600px;
+}
+
+.map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Map Legend */
+.map-legend {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.legend-marker {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+}
+
+.legend-marker.pickup {
+    background: #10b981;
+    color: white;
+}
+
+.legend-marker.delivery {
+    background: #ef4444;
+    color: white;
+}
+
+.legend-marker.driver {
+    background: #720707;
+    color: white;
+}
+
+.legend-line {
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.legend-line.route {
+    background: #720707;
+}
+
+/* Driver Location Info */
+.driver-location-info {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.location-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.last-updated {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: normal;
+}
+
+.location-details p {
+    color: #374151;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.location-coords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Map Loading Overlay */
+.map-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loading-content {
+    text-align: center;
+    color: #6b7280;
+}
+
+.loading-content i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #720707;
+}
+
+/* Custom Map Markers */
+:global(.custom-marker) {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+:global(.custom-marker:hover) {
+    transform: scale(1.1);
+}
+
+:global(.custom-marker.pickup) {
+    background: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+:global(.custom-marker.delivery) {
+    background: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+}
+
+:global(.custom-marker.driver) {
+    background: #720707;
+    box-shadow: 0 0 0 4px rgba(114, 7, 7, 0.3);
+    animation: driverPulse 2s infinite;
+}
+
+@keyframes driverPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 4px rgba(114, 7, 7, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(114, 7, 7, 0.1);
+    }
+}
+
+/* Map Popup Styles */
+:global(.maplibregl-popup-content) {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+:global(.marker-popup) {
+    padding: 0.5rem;
+}
+
+:global(.marker-popup h4) {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+:global(.marker-popup p) {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+:global(.marker-popup p:last-child) {
+    margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 350px 1fr;
+    }
+
+    .left-panel {
+        gap: 1rem;
+    }
+
+    .info-card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .job-details-container {
+        padding: 1rem;
+    }
+
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .right-panel {
+        position: static;
+    }
+
+    .map-container {
+        height: 400px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .customer-details,
+    .driver-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .driver-actions {
+        width: 100%;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-label {
+        min-width: auto;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 480px) {
+    .job-details-container {
+        padding: 0.5rem;
+    }
+
+    .job-header,
+    .info-card,
+    .map-card {
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .job-title h1 {
+        font-size: 1.5rem;
+    }
+
+    .job-id-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .track-btn,
+    .contact-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .map-container {
+        height: 300px;
+    }
+
+    .driver-location-info {
+        left: 0.5rem;
+        right: 0.5rem;
+        bottom: 0.5rem;
+    }
+
+    .map-legend {
+        left: 0.5rem;
+        top: 0.5rem;
+    }
 }

@@ -1,213 +1,371 @@
+
 <template>
-    <div class="job-tracking-container">
+    <div class="job-details-container">
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            Loading job tracking...
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p>Loading job details...</p>
         </div>
 
         <!-- Error State -->
         <div v-if="errorMessage" class="error-state">
-            <i class="fas fa-exclamation-circle"></i>
-            {{ errorMessage }}
-            <button @click="fetchJobData" class="retry-btn">Retry</button>
+            <div class="error-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h3>Unable to load job details</h3>
+            <p>{{ errorMessage }}</p>
+            <button @click="fetchJobDetails" class="retry-btn">
+                <i class="fas fa-redo"></i>
+                Try Again
+            </button>
         </div>
 
-        <!-- Job Tracking Content -->
-        <div v-if="job && !isLoading" class="tracking-content">
-            <!-- Header -->
-            <div class="tracking-header">
+        <!-- Job Details Content -->
+        <div v-else-if="jobDetails" class="job-details-content">
+            <!-- Header Section -->
+            <div class="job-header">
                 <div class="header-content">
                     <div class="header-left">
                         <button @click="goBack" class="back-btn">
                             <i class="fas fa-arrow-left"></i>
                             Back to Dashboard
                         </button>
-                        <div class="job-title" style="color: black;;">
-                            <h1>Live Tracking - Job #{{ job.id }}</h1>
-                            <p>Real-time location and status updates</p>
+                        <div class="job-title">
+                            <h1>Job Details</h1>
+                            <div class="job-id-section">
+                                <span class="job-id">{{ jobDetails._id.slice(-8) }}</span>
+                                <span v-if="jobDetails.isUrgent" class="urgent-badge">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    URGENT
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="header-right">
-                        <div class="status-badge" :class="`status-${job.status}`">
-                            <i :class="getStatusIcon(job.status)"></i>
-                            {{ job.status.toUpperCase() }}
+                        <div class="status-section">
+                            <span :class="['status-badge', jobDetails.status]">
+                                <i :class="getStatusIcon(jobDetails.status)"></i>
+                                {{ formatStatus(jobDetails.status) }}
+                            </span>
                         </div>
-                        <button @click="refreshTracking" class="refresh-btn" :disabled="isRefreshing">
-                            <i :class="['fas', isRefreshing ? 'fa-spinner fa-spin' : 'fa-sync-alt']"></i>
-                            Refresh
-                        </button>
+                        <div class="header-actions">
+                            <button @click="toggleLiveTracking" class="track-btn" :class="{ active: isLiveTracking }">
+                                <i :class="['fas', isLiveTracking ? 'fa-pause' : 'fa-play']"></i>
+                                {{ isLiveTracking ? 'Pause Tracking' : 'Start Live Tracking' }}
+                            </button>
+                            <button @click="contactCustomer" class="contact-btn">
+                                <i class="fas fa-phone"></i>
+                                Contact
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Tracking Content -->
-            <div class="tracking-main">
-                <!-- Map Section -->
-                <div class="map-section">
-                    <div id="job-tracking-map" class="tracking-map"></div>
-
-                    <!-- Map Controls -->
-                    <div class="map-controls">
-                        <button @click="centerOnVehicle" class="map-control" title="Center on Vehicle">
-                            <i class="fas fa-crosshairs"></i>
-                        </button>
-                        <button @click="fitRoute" class="map-control" title="Fit Route">
-                            <i class="fas fa-expand-arrows-alt"></i>
-                        </button>
-                        <button @click="toggleMapStyle" class="map-control" title="Toggle Map Style">
-                            <i class="fas fa-layer-group"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Info Panel -->
-                <div class="info-panel">
-                    <!-- Progress Timeline -->
-                    <div class="panel-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-route"></i>
-                            Delivery Progress
-                        </h3>
-                        <div class="progress-timeline">
-                            <div class="timeline-item"
-                                :class="{ completed: job.pickupCompleted, active: job.status === 'pending' }">
-                                <div class="timeline-icon">
-                                    <i class="fas fa-circle"></i>
+            <!-- Main Content Grid -->
+            <div class="main-content">
+                <!-- Left Panel - Job Information -->
+                <div class="left-panel">
+                    <!-- Customer Information Card -->
+                    <div class="info-card customer-card">
+                        <div class="card-header">
+                            <div class="card-icon customer">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h3>Customer Information</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="customer-details">
+                                <div class="customer-avatar">
+                                    <span>{{ getCustomerInitials(jobDetails.pickupInfo.name) }}</span>
                                 </div>
-                                <div class="timeline-content">
-                                    <div class="timeline-title">Pickup</div>
-                                    <div class="timeline-location">{{ job.pickupLocation }}</div>
-                                    <div class="timeline-time">{{ formatTime(job.pickupTime) }}</div>
-                                </div>
-                                <div class="timeline-status">
-                                    <i v-if="job.pickupCompleted" class="fas fa-check-circle completed"></i>
-                                    <i v-else-if="job.status === 'pending'" class="fas fa-clock pending"></i>
+                                <div class="customer-info">
+                                    <h4>{{ jobDetails.pickupInfo.name }}</h4>
+                                    <p class="customer-email">{{ jobDetails.pickupInfo.email }}</p>
+                                    <p class="customer-phone">{{ jobDetails.pickupInfo.phone }}</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="timeline-connector"
-                                :class="{ active: job.status === 'active' || job.status === 'in-transit' }"></div>
+                    <!-- Driver Information Card -->
+                    <div class="info-card driver-card" v-if="jobDetails.driverInfo">
+                        <div class="card-header">
+                            <div class="card-icon driver">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <h3>Assigned Driver</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="driver-details">
+                                <div class="driver-avatar">
+                                    <span>{{ getDriverInitials(jobDetails.driverInfo.name) }}</span>
+                                </div>
+                                <div class="driver-info">
+                                    <h4>{{ jobDetails.driverInfo.name }}</h4>
+                                    <p class="driver-phone">{{ jobDetails.driverInfo.phone }}</p>
+                                    <div class="driver-status online">
+                                        <div class="status-dot"></div>
+                                        <span>Online</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="driver-actions">
+                                <button @click="callDriver" class="driver-action-btn">
+                                    <i class="fas fa-phone"></i>
+                                    Call
+                                </button>
+                                <button @click="messageDriver" class="driver-action-btn">
+                                    <i class="fas fa-message"></i>
+                                    Message
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="timeline-item"
-                                :class="{ active: job.status === 'active' || job.status === 'in-transit' }">
-                                <div class="timeline-icon">
-                                    <i class="fas fa-truck"></i>
+                    <!-- Route Information Card -->
+                    <div class="info-card route-card">
+                        <div class="card-header">
+                            <div class="card-icon route">
+                                <i class="fas fa-route"></i>
+                            </div>
+                            <h3>Route Details</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="route-details">
+                                <div class="route-point pickup">
+                                    <div class="point-marker">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="point-info">
+                                        <span class="point-label">Pickup Location</span>
+                                        <p class="point-address">{{ formatAddress(jobDetails.pickupInfo) }}</p>
+                                        <p class="point-contact">{{ jobDetails.pickupInfo.name }} • {{
+                                            jobDetails.pickupInfo.phone }}</p>
+                                    </div>
                                 </div>
-                                <div class="timeline-content">
-                                    <div class="timeline-title">In Transit</div>
-                                    <div class="timeline-location">{{ job.currentLocation }}</div>
-                                    <div class="timeline-time">{{ formatTime(job.lastUpdate) }}</div>
+
+                                <div class="route-connector">
+                                    <div class="connector-line"></div>
+                                    <div class="distance-info" v-if="routeDistance">
+                                        <span>{{ routeDistance }} km</span>
+                                        <span>{{ routeDuration }}</span>
+                                    </div>
                                 </div>
-                                <div class="timeline-status">
-                                    <div v-if="job.status === 'active' || job.status === 'in-transit'"
-                                        class="progress-indicator">
-                                        {{ job.progress }}%
+
+                                <div class="route-point delivery">
+                                    <div class="point-marker">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <div class="point-info">
+                                        <span class="point-label">Delivery Location</span>
+                                        <p class="point-address">{{ formatAddress(jobDetails.dropoffInfo) }}</p>
+                                        <p class="point-contact">{{ jobDetails.dropoffInfo.name }} • {{
+                                            jobDetails.dropoffInfo.phone }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Progress Card -->
+                    <div class="info-card progress-card">
+                        <div class="card-header">
+                            <div class="card-icon progress">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <h3>Job Progress</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="progress-overview">
+                                <div class="progress-stats">
+                                    <div class="progress-percentage">{{ jobProgress }}%</div>
+                                    <div class="progress-label">Complete</div>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" :style="{ width: jobProgress + '%' }"
+                                            :class="jobDetails.status"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="timeline-connector"
-                                :class="{ completed: job.status === 'delivered' || job.status === 'completed' }"></div>
+                            <div class="progress-timeline">
+                                <div class="timeline-item" :class="{ completed: jobProgress >= 0 }">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5>Job Created</h5>
+                                        <p>{{ formatDateTime(jobDetails.createdAt) }}</p>
+                                    </div>
+                                </div>
 
-                            <div class="timeline-item"
-                                :class="{ completed: job.status === 'delivered' || job.status === 'completed' }">
-                                <div class="timeline-icon">
-                                    <i class="fas fa-map-marker-alt"></i>
+                                <div class="timeline-item" :class="{ completed: jobProgress >= 25 }">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5>Driver Assigned</h5>
+                                        <p v-if="jobDetails.driverInfo">{{ jobDetails.driverInfo.name }}</p>
+                                        <p v-else class="pending">Pending assignment</p>
+                                    </div>
                                 </div>
-                                <div class="timeline-content">
-                                    <div class="timeline-title">Delivery</div>
-                                    <div class="timeline-location">{{ job.deliveryLocation }}</div>
-                                    <div class="timeline-time">ETA: {{ formatTime(job.eta) }}</div>
+
+                                <div class="timeline-item" :class="{ completed: jobProgress >= 50 }">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5>En Route to Pickup</h5>
+                                        <p v-if="jobProgress >= 50">Driver heading to pickup location</p>
+                                        <p v-else class="pending">Waiting for driver</p>
+                                    </div>
                                 </div>
-                                <div class="timeline-status">
-                                    <i v-if="job.status === 'delivered' || job.status === 'completed'"
-                                        class="fas fa-check-circle completed"></i>
+
+                                <div class="timeline-item" :class="{ completed: jobProgress >= 75 }">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5>Package Collected</h5>
+                                        <p v-if="jobProgress >= 75">En route to delivery</p>
+                                        <p v-else class="pending">Awaiting pickup</p>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item" :class="{ completed: jobProgress >= 100 }">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5>Delivered</h5>
+                                        <p v-if="jobProgress >= 100">Package delivered successfully</p>
+                                        <p v-else class="pending">In transit</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Driver Information -->
-                    <div class="panel-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-user-tie"></i>
-                            Driver Information
-                        </h3>
-                        <div class="driver-card">
-                            <div class="driver-avatar">
-                                <img :src="job.driverInfo.avatar" :alt="job.driverInfo.name" />
+                    <!-- Additional Information Card -->
+                    <div class="info-card additional-card">
+                        <div class="card-header">
+                            <div class="card-icon additional">
+                                <i class="fas fa-info-circle"></i>
                             </div>
-                            <div class="driver-details">
-                                <div class="driver-name">{{ job.driverInfo.name }}</div>
-                                <div class="driver-phone">{{ job.driverInfo.phone }}</div>
-                                <div class="driver-rating">
-                                    <i v-for="n in 5" :key="n"
-                                        :class="['fas fa-star', { active: n <= job.driverInfo.rating }]"></i>
-                                    <span>{{ job.driverInfo.rating }}/5</span>
+                            <h3>Additional Information</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="additional-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Special Instructions:</span>
+                                    <span class="detail-value">{{ jobDetails.note || 'None' }}</span>
+                                </div>
+
+                                <div class="detail-row">
+                                    <span class="detail-label">Add-ons:</span>
+                                    <div class="addons-list">
+                                        <span v-if="jobDetails.addOns?.fragileItems" class="addon-tag fragile">
+                                            <i class="fas fa-fragile"></i>
+                                            Fragile Items
+                                        </span>
+                                        <span v-if="jobDetails.addOns?.heavyItem" class="addon-tag heavy">
+                                            <i class="fas fa-weight-hanging"></i>
+                                            Heavy Item
+                                        </span>
+                                        <span v-if="!jobDetails.addOns?.fragileItems && !jobDetails.addOns?.heavyItem"
+                                            class="addon-tag none">
+                                            No special requirements
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row">
+                                    <span class="detail-label">Created:</span>
+                                    <span class="detail-value">{{ formatDateTime(jobDetails.createdAt) }}</span>
+                                </div>
+
+                                <div class="detail-row">
+                                    <span class="detail-label">Last Updated:</span>
+                                    <span class="detail-value">{{ formatDateTime(jobDetails.updatedAt) }}</span>
                                 </div>
                             </div>
-                            <div class="driver-actions">
-                                <button @click="callDriver" class="action-btn call">
-                                    <i class="fas fa-phone"></i>
-                                    Call
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Live Tracking Map -->
+                <div class="right-panel">
+                    <div class="map-card">
+                        <div class="map-header">
+                            <h3>
+                                <i class="fas fa-map-marked-alt"></i>
+                                Live Tracking
+                            </h3>
+                            <div class="map-controls">
+                                <button @click="centerMap" class="map-control-btn" title="Center Map">
+                                    <i class="fas fa-crosshairs"></i>
                                 </button>
-                                <button @click="messageDriver" class="action-btn message">
-                                    <i class="fas fa-sms"></i>
-                                    SMS
+                                <button @click="fitRoute" class="map-control-btn" title="Fit Route">
+                                    <i class="fas fa-expand-arrows-alt"></i>
+                                </button>
+                                <button @click="toggleMapStyle" class="map-control-btn" title="Toggle Style">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button @click="refreshLocation" class="map-control-btn" title="Refresh Location"
+                                    :disabled="isRefreshingLocation">
+                                    <i :class="['fas fa-sync-alt', { 'fa-spin': isRefreshingLocation }]"></i>
                                 </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Vehicle Information -->
-                    <div class="panel-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-truck"></i>
-                            Vehicle Information
-                        </h3>
-                        <div class="vehicle-info">
-                            <div class="vehicle-item">
-                                <i class="fas fa-truck"></i>
-                                <span>{{ job.vehicleInfo.type }}</span>
+                        <div class="map-container">
+                            <div id="job-tracking-map" class="map"></div>
+
+                            <!-- Map Legend -->
+                            <div class="map-legend">
+                                <div class="legend-title">Legend</div>
+                                <div class="legend-items">
+                                    <div class="legend-item">
+                                        <div class="legend-marker pickup"></div>
+                                        <span>Pickup Location</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker delivery"></div>
+                                        <span>Delivery Location</span>
+                                    </div>
+                                    <div class="legend-item" v-if="driverLocation">
+                                        <div class="legend-marker driver"></div>
+                                        <span>Driver Location</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-line route"></div>
+                                        <span>Planned Route</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="vehicle-item">
-                                <i class="fas fa-id-card"></i>
-                                <span>{{ job.vehicleInfo.plate }}</span>
+
+                            <!-- Driver Location Info -->
+                            <div v-if="driverLocation" class="driver-location-info">
+                                <div class="location-header">
+                                    <i class="fas fa-truck"></i>
+                                    <span>Driver Location</span>
+                                    <div class="last-updated">
+                                        Updated {{ formatRelativeTime(driverLocation.timestamp) }}
+                                    </div>
+                                </div>
+                                <div class="location-details">
+                                    <p>{{ driverLocation.address || 'Fetching address...' }}</p>
+                                    <div class="location-coords">
+                                        {{ driverLocation.latitude?.toFixed(6) }}, {{
+                                            driverLocation.longitude?.toFixed(6) }}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="vehicle-item">
-                                <i class="fas fa-palette"></i>
-                                <span>{{ job.vehicleInfo.color }}</span>
+
+                            <!-- Map Loading Overlay -->
+                            <div v-if="isMapLoading" class="map-loading">
+                                <div class="loading-content">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Loading map...</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Customer Information -->
-                    <div class="panel-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-user"></i>
-                            Customer Information
-                        </h3>
-                        <div class="customer-info">
-                            <div class="info-item">
-                                <label>Name:</label>
-                                <span>{{ job.customer?.name || 'N/A' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <label>Phone:</label>
-                                <span>{{ job.customer?.phone || 'N/A' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <label>Email:</label>
-                                <span>{{ job.customer?.email || 'N/A' }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Last Update -->
-                    <div class="last-update">
-                        <i class="fas fa-clock"></i>
-                        Last updated: {{ formatTime(job.lastUpdate) }}
                     </div>
                 </div>
             </div>
@@ -215,1024 +373,538 @@
     </div>
 </template>
 
-<script>
-import { useRouter, useRoute } from 'vue-router'
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
+<script setup>
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import apiClient from '@/api/axios';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-export default {
-    name: 'JobTracking',
-    setup() {
-        const router = useRouter()
-        const route = useRoute()
-        return { router, route }
-    },
-    data() {
-        return {
-            // Job data
-            job: null,
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-            // UI state
-            isLoading: false,
-            isRefreshing: false,
-            errorMessage: '',
+// Reactive data
+const jobDetails = ref(null);
+const isLoading = ref(false);
+const errorMessage = ref('');
+const isLiveTracking = ref(false);
+const isMapLoading = ref(false);
+const isRefreshingLocation = ref(false);
 
-            // Map
-            map: null,
-            mapStyle: 'streets-v2',
+// Map related
+const map = ref(null);
+const mapStyle = ref('streets-v2');
+const driverLocation = ref(null);
+const routeDistance = ref(null);
+const routeDuration = ref(null);
 
-            // Markers
-            pickupMarker: null,
-            deliveryMarker: null,
-            vehicleMarker: null,
+// Map markers
+const pickupMarker = ref(null);
+const deliveryMarker = ref(null);
+const driverMarker = ref(null);
 
-            // Real-time updates
-            updateInterval: null,
+// Tracking interval
+const trackingInterval = ref(null);
 
-            // API configuration
-            mapTilerKey: import.meta.env.VITE_MAPTILER_API_KEY || 'pj6JP8mcZoHH4whFRfMA'
+// Environment variables
+const mapTilerKey = import.meta.env.VITE_MAPTILER_API_KEY || "pj6JP8mcZoHH4whFRfMA";
+const orsKey = import.meta.env.VITE_ORS_API_KEY;
+
+// Computed properties
+const jobProgress = computed(() => {
+    if (!jobDetails.value) return 0;
+
+    const progressMap = {
+        'pending': 0,
+        'assigned': 25,
+        'in-transit': 50,
+        'out-for-delivery': 75,
+        'delivered': 100,
+        'delayed': 30,
+        'cancelled': 0
+    };
+
+    return progressMap[jobDetails.value.status] || 0;
+});
+
+// Methods
+const fetchJobDetails = async () => {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+        const jobId = route.params.id;
+        const response = await apiClient.get(`/job/getJobById/${jobId}`);
+
+        if (response.data && response.data.success && response.data.job) {
+            jobDetails.value = response.data.job;
+            console.log('Job details fetched:', jobDetails.value); // Debug log
+            await nextTick(); // Ensure DOM is updated
+            await initializeMap();
+            await calculateRoute();
+        } else {
+            throw new Error('Job not found');
         }
-    },
-
-    async mounted() {
-        await this.fetchJobData()
-        this.initializeMap()
-        this.startRealTimeUpdates()
-    },
-
-    beforeUnmount() {
-        this.stopRealTimeUpdates()
-        if (this.map) {
-            this.map.remove()
-        }
-    },
-
-    methods: {
-        async fetchJobData() {
-            this.isLoading = true
-            this.errorMessage = ''
-
-            try {
-                // Try to fetch from API first
-                const response = await fetch(`/api/jobs/${this.route.params.id}`)
-                if (!response.ok) {
-                    throw new Error('API not available')
-                }
-                this.job = await response.json()
-            } catch (error) {
-                console.warn('API not available, using mock data:', error)
-                // Fallback to mock data
-                this.job = this.getMockJobData()
-            } finally {
-                this.isLoading = false
-            }
-        },
-
-        getMockJobData() {
-            // Mock data based on job ID from route
-            const jobId = this.route.params.id
-
-            const mockJobs = {
-                'job001': {
-                    id: 'JOB001',
-                    _id: 'job001',
-                    status: 'active',
-                    pickupLocation: 'Kathmandu Durbar Square',
-                    deliveryLocation: 'Bhaktapur Durbar Square',
-                    pickupTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-                    eta: new Date(Date.now() + 1 * 60 * 60 * 1000),
-                    lastUpdate: new Date(Date.now() - 5 * 60 * 1000),
-                    currentLocation: 'Thimi, Bhaktapur',
-                    progress: 65,
-                    pickupCompleted: true,
-                    pickupCoords: [85.3240, 27.7172],
-                    deliveryCoords: [85.4298, 27.6710],
-                    currentCoords: [85.3890, 27.6810],
-                    distance: 12.5,
-                    estimatedTime: 45,
-                    currentSpeed: 35,
-                    driverInfo: {
-                        name: 'Ram Bahadur Shrestha',
-                        phone: '+977-9841234567',
-                        avatar: '/avatar1.jpg',
-                        rating: 4.8
-                    },
-                    vehicleInfo: {
-                        type: 'Delivery Van',
-                        plate: 'BA-12-PA-3456',
-                        color: 'White'
-                    },
-                    customer: {
-                        name: 'Sita Sharma',
-                        email: 'sita.sharma@email.com',
-                        phone: '+977-9801234567',
-                        company: 'Heritage Crafts'
-                    }
-                },
-                'job002': {
-                    id: 'JOB002',
-                    _id: 'job002',
-                    status: 'pending',
-                    pickupLocation: 'Patan Museum',
-                    deliveryLocation: 'Swayambhunath Temple',
-                    pickupTime: new Date(Date.now() + 30 * 60 * 1000),
-                    eta: new Date(Date.now() + 2 * 60 * 60 * 1000),
-                    lastUpdate: new Date(),
-                    currentLocation: 'Patan Dhoka',
-                    progress: 0,
-                    pickupCompleted: false,
-                    pickupCoords: [85.3206, 27.6734],
-                    deliveryCoords: [85.2900, 27.7149],
-                    currentCoords: [85.3206, 27.6734],
-                    distance: 8.2,
-                    estimatedTime: 25,
-                    currentSpeed: 0,
-                    driverInfo: {
-                        name: 'Sita Gurung',
-                        phone: '+977-9851234567',
-                        avatar: '/avatar2.jpg',
-                        rating: 4.6
-                    },
-                    vehicleInfo: {
-                        type: 'Motorcycle',
-                        plate: 'BA-45-PA-7890',
-                        color: 'Red'
-                    },
-                    customer: {
-                        name: 'John Smith',
-                        email: 'john.smith@email.com',
-                        phone: '+977-9802234567',
-                        company: 'Tourist Guide Services'
-                    }
-                }
-            }
-
-            return mockJobs[jobId] || mockJobs['job001']
-        },
-
-        async refreshTracking() {
-            this.isRefreshing = true
-            await this.fetchJobData()
-            this.updateMapMarkers()
-            this.isRefreshing = false
-        },
-
-        initializeMap() {
-            if (!this.job) return
-
-            try {
-                this.map = new maplibregl.Map({
-                    container: 'job-tracking-map',
-                    style: `https://api.maptiler.com/maps/${this.mapStyle}/style.json?key=${this.mapTilerKey}`,
-                    center: this.job.currentCoords,
-                    zoom: 12,
-                    maxBounds: [
-                        [80.058, 26.347], // Southwest Nepal
-                        [88.2015, 30.447]  // Northeast Nepal
-                    ]
-                })
-
-                this.map.on('load', () => {
-                    this.addMapMarkers()
-                    this.addRouteLayer()
-                    this.fitRoute()
-                })
-
-            } catch (error) {
-                console.error('Error initializing map:', error)
-                this.errorMessage = 'Failed to initialize map'
-            }
-        },
-
-        addMapMarkers() {
-            if (!this.map || !this.job) return
-
-            // Add pickup marker
-            this.pickupMarker = new maplibregl.Marker({
-                color: '#28a745',
-                scale: 1.2
-            })
-                .setLngLat(this.job.pickupCoords)
-                .setPopup(new maplibregl.Popup().setHTML(`
-          <div class="map-popup">
-            <strong>Pickup Location</strong><br>
-            ${this.job.pickupLocation}<br>
-            ${this.job.pickupCompleted ? 'Completed' : 'Pending'}
-          </div>
-        `))
-                .addTo(this.map)
-
-            // Add delivery marker
-            this.deliveryMarker = new maplibregl.Marker({
-                color: '#dc3545',
-                scale: 1.2
-            })
-                .setLngLat(this.job.deliveryCoords)
-                .setPopup(new maplibregl.Popup().setHTML(`
-          <div class="map-popup">
-            <strong>Delivery Location</strong><br>
-            ${this.job.deliveryLocation}<br>
-            ETA: ${this.formatTime(this.job.eta)}
-          </div>
-        `))
-                .addTo(this.map)
-
-            // Add vehicle marker
-            this.vehicleMarker = new maplibregl.Marker({
-                color: '#720707',
-                scale: 1.5
-            })
-                .setLngLat(this.job.currentCoords)
-                .setPopup(new maplibregl.Popup().setHTML(`
-          <div class="map-popup">
-            <strong>Current Location</strong><br>
-            ${this.job.currentLocation}<br>
-            Driver: ${this.job.driverInfo.name}<br>
-            Speed: ${this.job.currentSpeed} km/h
-          </div>
-        `))
-                .addTo(this.map)
-        },
-
-        addRouteLayer() {
-            if (!this.map || !this.job) return
-
-            // Create route line
-            const routeCoordinates = [
-                this.job.pickupCoords,
-                this.job.currentCoords,
-                this.job.deliveryCoords
-            ]
-
-            this.map.addSource('route', {
-                type: 'geojson',
-                data: {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: routeCoordinates
-                    }
-                }
-            })
-
-            this.map.addLayer({
-                id: 'route',
-                type: 'line',
-                source: 'route',
-                layout: {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                paint: {
-                    'line-color': '#720707',
-                    'line-width': 4,
-                    'line-opacity': 0.8
-                }
-            })
-        },
-
-        updateMapMarkers() {
-            if (!this.map || !this.job) return
-
-            // Update vehicle marker position
-            if (this.vehicleMarker) {
-                this.vehicleMarker.setLngLat(this.job.currentCoords)
-                this.vehicleMarker.setPopup(new maplibregl.Popup().setHTML(`
-          <div class="map-popup">
-            <strong>Current Location</strong><br>
-            ${this.job.currentLocation}<br>
-            Driver: ${this.job.driverInfo.name}<br>
-            Speed: ${this.job.currentSpeed} km/h
-          </div>
-        `))
-            }
-
-            // Update route
-            if (this.map.getSource('route')) {
-                const routeCoordinates = [
-                    this.job.pickupCoords,
-                    this.job.currentCoords,
-                    this.job.deliveryCoords
-                ]
-
-                this.map.getSource('route').setData({
-                    type: 'Feature',
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: routeCoordinates
-                    }
-                })
-            }
-        },
-
-        centerOnVehicle() {
-            if (this.map && this.job) {
-                this.map.flyTo({
-                    center: this.job.currentCoords,
-                    zoom: 14,
-                    duration: 1000
-                })
-            }
-        },
-
-        fitRoute() {
-            if (!this.map || !this.job) return
-
-            const coordinates = [
-                this.job.pickupCoords,
-                this.job.currentCoords,
-                this.job.deliveryCoords
-            ]
-
-            const bounds = coordinates.reduce((bounds, coord) => {
-                return bounds.extend(coord)
-            }, new maplibregl.LngLatBounds(coordinates[0], coordinates[0]))
-
-            this.map.fitBounds(bounds, { padding: 50 })
-        },
-
-        toggleMapStyle() {
-            this.mapStyle = this.mapStyle === 'streets-v2' ? 'satellite' : 'streets-v2'
-            if (this.map) {
-                this.map.setStyle(`https://api.maptiler.com/maps/${this.mapStyle}/style.json?key=${this.mapTilerKey}`)
-                this.map.once('styledata', () => {
-                    this.addMapMarkers()
-                    this.addRouteLayer()
-                })
-            }
-        },
-
-        startRealTimeUpdates() {
-            // Update every 10 seconds for real-time tracking
-            this.updateInterval = setInterval(() => {
-                this.simulateRealTimeUpdate()
-            }, 10000)
-        },
-
-        stopRealTimeUpdates() {
-            if (this.updateInterval) {
-                clearInterval(this.updateInterval)
-            }
-        },
-
-        simulateRealTimeUpdate() {
-            if (!this.job || this.job.status === 'completed' || this.job.status === 'delivered') {
-                return
-            }
-
-            // Simulate location changes
-            if (this.job.currentCoords && (this.job.status === 'active' || this.job.status === 'in-transit')) {
-                // Small random movement
-                this.job.currentCoords[0] += (Math.random() - 0.5) * 0.001
-                this.job.currentCoords[1] += (Math.random() - 0.5) * 0.001
-
-                // Update progress
-                this.job.progress = Math.min(100, this.job.progress + Math.random() * 3)
-
-                // Update speed
-                this.job.currentSpeed = Math.floor(Math.random() * 60) + 10
-
-                // Update last update time
-                this.job.lastUpdate = new Date()
-
-                // Update map markers
-                this.updateMapMarkers()
-            }
-        },
-
-        callDriver() {
-            window.open(`tel:${this.job.driverInfo.phone}`)
-        },
-
-        messageDriver() {
-            window.open(`sms:${this.job.driverInfo.phone}`)
-        },
-
-        goBack() {
-            this.router.push('/')
-        },
-
-        getStatusIcon(status) {
-            const icons = {
-                active: 'fas fa-truck',
-                'in-transit': 'fas fa-truck',
-                pending: 'fas fa-clock',
-                assigned: 'fas fa-user-check',
-                completed: 'fas fa-check-circle',
-                delivered: 'fas fa-check-circle',
-                delayed: 'fas fa-exclamation-triangle'
-            }
-            return icons[status] || 'fas fa-question-circle'
-        },
-
-        formatTime(date) {
-            if (!date) return 'N/A'
-            return new Date(date).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit'
-            })
-        }
+    } catch (error) {
+        console.error('Error fetching job details:', error);
+        errorMessage.value = error.response?.data?.message || 'Failed to load job details';
+    } finally {
+        isLoading.value = false;
     }
-}
+};
+
+const initializeMap = async () => {
+    if (!jobDetails.value) return;
+
+    try {
+        isMapLoading.value = true;
+        const mapContainer = document.getElementById('job-tracking-map');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            errorMessage.value = 'Map container not found. Please try again.';
+            isMapLoading.value = false;
+            return;
+        }
+
+        map.value = new maplibregl.Map({
+            container: 'job-tracking-map',
+            style: `https://api.maptiler.com/maps/${mapStyle.value}/style.json?key=${mapTilerKey}`,
+            center: [85.324, 27.7172], // Kathmandu, Nepal
+            zoom: 12,
+            attributionControl: true,
+            maxBounds: [
+                [80.058, 26.347], // Southwest
+                [88.2015, 30.447], // Northeast
+            ]
+        });
+
+        map.value.on('load', () => {
+            console.log('Map loaded successfully');
+            addMapMarkers();
+            isMapLoading.value = false;
+        });
+
+        map.value.on('error', (e) => {
+            console.error('Map error:', e.error);
+            errorMessage.value = 'Failed to load map. Please try again later.';
+            isMapLoading.value = false;
+        });
+
+        map.value.addControl(new maplibregl.NavigationControl(), 'top-right');
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        errorMessage.value = 'Failed to initialize map. Please try again later.';
+        isMapLoading.value = false;
+    }
+};
+
+const addMapMarkers = () => {
+    if (!map.value || !jobDetails.value) return;
+
+    // Add pickup marker
+    if (jobDetails.value.pickupInfo.latitude && jobDetails.value.pickupInfo.longitude) {
+        const pickupCoords = [
+            parseFloat(jobDetails.value.pickupInfo.longitude),
+            parseFloat(jobDetails.value.pickupInfo.latitude)
+        ];
+
+        const pickupEl = document.createElement('div');
+        pickupEl.className = 'custom-marker pickup';
+        pickupEl.innerHTML = '<i class="fas fa-circle"></i>';
+
+        pickupMarker.value = new maplibregl.Marker(pickupEl)
+            .setLngLat(pickupCoords)
+            .setPopup(new maplibregl.Popup().setHTML(`
+                <div class="marker-popup">
+                    <h4>Pickup Location</h4>
+                    <p><strong>${jobDetails.value.pickupInfo.name}</strong></p>
+                    <p>${jobDetails.value.pickupInfo.phone}</p>
+                    <p>${formatAddress(jobDetails.value.pickupInfo)}</p>
+                </div>
+            `))
+            .addTo(map.value);
+    }
+
+    // Add delivery marker
+    if (jobDetails.value.dropoffInfo.latitude && jobDetails.value.dropoffInfo.longitude) {
+        const deliveryCoords = [
+            parseFloat(jobDetails.value.dropoffInfo.longitude),
+            parseFloat(jobDetails.value.dropoffInfo.latitude)
+        ];
+
+        const deliveryEl = document.createElement('div');
+        deliveryEl.className = 'custom-marker delivery';
+        deliveryEl.innerHTML = '<i class="fas fa-map-marker-alt"></i>';
+
+        deliveryMarker.value = new maplibregl.Marker(deliveryEl)
+            .setLngLat(deliveryCoords)
+            .setPopup(new maplibregl.Popup().setHTML(`
+                <div class="marker-popup">
+                    <h4>Delivery Location</h4>
+                    <p><strong>${jobDetails.value.dropoffInfo.name}</strong></p>
+                    <p>${jobDetails.value.dropoffInfo.phone}</p>
+                    <p>${formatAddress(jobDetails.value.dropoffInfo)}</p>
+                </div>
+            `))
+            .addTo(map.value);
+    }
+};
+
+const calculateRoute = async () => {
+    if (!jobDetails.value || !orsKey) return;
+
+    try {
+        const pickupLat = parseFloat(jobDetails.value.pickupInfo.latitude);
+        const pickupLng = parseFloat(jobDetails.value.pickupInfo.longitude);
+        const deliveryLat = parseFloat(jobDetails.value.dropoffInfo.latitude);
+        const deliveryLng = parseFloat(jobDetails.value.dropoffInfo.longitude);
+
+        if (isNaN(pickupLat) || isNaN(pickupLng) || isNaN(deliveryLat) || isNaN(deliveryLng)) {
+            console.error('Invalid coordinates:', {
+                pickupLat,
+                pickupLng,
+                deliveryLat,
+                deliveryLng
+            });
+            errorMessage.value = 'Invalid coordinates for route calculation.';
+            return;
+        }
+
+        const pickupCoords = [pickupLng, pickupLat];
+        const deliveryCoords = [deliveryLng, deliveryLat];
+
+        const requestBody = {
+            coordinates: [pickupCoords, deliveryCoords],
+            profile: 'driving-car',
+            format: 'geojson',
+            instructions: false
+        };
+
+        const response = await fetch(
+            'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': orsKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            }
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('ORS API response:', data); // Debug log
+            if (data.features && data.features.length > 0 && data.features[0].properties?.summary) {
+                const route = data.features[0];
+                routeDistance.value = (route.properties.summary.distance / 1000).toFixed(1); // Convert meters to km
+                routeDuration.value = formatDuration(route.properties.summary.duration); // Duration in seconds
+                displayRouteOnMap(route.geometry);
+            } else {
+                console.error('Invalid route data:', data);
+                errorMessage.value = 'Failed to calculate route: Invalid data returned.';
+            }
+        } else {
+            const errorData = await response.json();
+            console.error('ORS API request failed:', response.status, errorData);
+            errorMessage.value = errorData.message || 'Failed to calculate route.';
+        }
+    } catch (error) {
+        console.error('Error calculating route:', error);
+        errorMessage.value = 'Failed to calculate route. Please try again.';
+    }
+};
+
+const displayRouteOnMap = (geometry) => {
+    if (!map.value) return;
+
+    // Remove existing route
+    if (map.value.getSource('route')) {
+        map.value.removeLayer('route');
+        map.value.removeSource('route');
+    }
+
+    // Add route source and layer
+    map.value.addSource('route', {
+        type: 'geojson',
+        data: {
+            type: 'Feature',
+            geometry: geometry
+        }
+    });
+
+    map.value.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        paint: {
+            'line-color': '#720707',
+            'line-width': 4,
+            'line-opacity': 0.8
+        }
+    });
+};
+
+const toggleLiveTracking = () => {
+    isLiveTracking.value = !isLiveTracking.value;
+
+    if (isLiveTracking.value) {
+        startLiveTracking();
+    } else {
+        stopLiveTracking();
+    }
+};
+
+const startLiveTracking = () => {
+    fetchDriverLocation();
+    trackingInterval.value = setInterval(fetchDriverLocation, 30000); // Update every 30 seconds
+};
+
+const stopLiveTracking = () => {
+    if (trackingInterval.value) {
+        clearInterval(trackingInterval.value);
+        trackingInterval.value = null;
+    }
+};
+
+const fetchDriverLocation = async () => {
+    if (!jobDetails.value?._id) return;
+
+    try {
+        const response = await apiClient.get(`/coordinate/getAllCoord/${jobDetails.value._id}`);
+
+        if (response.data && response.data.length > 0) {
+            const latestCoord = response.data[response.data.length - 1];
+
+            if (latestCoord.latitude && latestCoord.longitude) {
+                driverLocation.value = {
+                    latitude: parseFloat(latestCoord.latitude),
+                    longitude: parseFloat(latestCoord.longitude),
+                    timestamp: latestCoord.timestamp || new Date(),
+                    address: null
+                };
+
+                updateDriverMarker();
+                await reverseGeocode(driverLocation.value.latitude, driverLocation.value.longitude);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching driver location:', error);
+    }
+};
+
+const updateDriverMarker = () => {
+    if (!map.value || !driverLocation.value) return;
+
+    const coords = [driverLocation.value.longitude, driverLocation.value.latitude];
+
+    if (driverMarker.value) {
+        driverMarker.value.remove();
+    }
+
+    const driverEl = document.createElement('div');
+    driverEl.className = 'custom-marker driver';
+    driverEl.innerHTML = '<i class="fas fa-truck"></i>';
+
+    driverMarker.value = new maplibregl.Marker(driverEl)
+        .setLngLat(coords)
+        .setPopup(new maplibregl.Popup().setHTML(`
+            <div class="marker-popup">
+                <h4>Driver Location</h4>
+                <p><strong>${jobDetails.value.driverInfo?.name || 'Driver'}</strong></p>
+                <p>Last updated: ${formatRelativeTime(driverLocation.value.timestamp)}</p>
+                <p>${driverLocation.value.address || 'Fetching address...'}</p>
+            </div>
+        `))
+        .addTo(map.value);
+};
+
+const reverseGeocode = async (lat, lng) => {
+    try {
+        const response = await fetch(
+            `https://api.maptiler.com/geocoding/${lat},${lng}.json?key=${mapTilerKey}`
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+                driverLocation.value.address = data.features[0].place_name;
+            }
+        }
+    } catch (error) {
+        console.error('Error reverse geocoding:', error);
+    }
+};
+
+const refreshLocation = async () => {
+    isRefreshingLocation.value = true;
+    await fetchDriverLocation();
+    setTimeout(() => {
+        isRefreshingLocation.value = false;
+    }, 1000);
+};
+
+const centerMap = () => {
+    if (!map.value || !jobDetails.value) return;
+
+    const pickupCoords = [
+        parseFloat(jobDetails.value.pickupInfo.longitude),
+        parseFloat(jobDetails.value.pickupInfo.latitude)
+    ];
+    const deliveryCoords = [
+        parseFloat(jobDetails.value.dropoffInfo.longitude),
+        parseFloat(jobDetails.value.dropoffInfo.latitude)
+    ];
+
+    const bounds = new maplibregl.LngLatBounds();
+    bounds.extend(pickupCoords);
+    bounds.extend(deliveryCoords);
+
+    if (driverLocation.value) {
+        bounds.extend([driverLocation.value.longitude, driverLocation.value.latitude]);
+    }
+
+    map.value.fitBounds(bounds, { padding: 50 });
+};
+
+const fitRoute = () => {
+    centerMap();
+};
+
+const toggleMapStyle = () => {
+    if (!map.value) return;
+
+    mapStyle.value = mapStyle.value === 'streets-v2' ? 'satellite' : 'streets-v2';
+    map.value.setStyle(`https://api.maptiler.com/maps/${mapStyle.value}/style.json?key=${mapTilerKey}`);
+
+    map.value.once('styledata', () => {
+        addMapMarkers();
+        if (driverLocation.value) {
+            updateDriverMarker();
+        }
+        calculateRoute();
+    });
+};
+
+// Utility functions
+const getStatusIcon = (status) => {
+    const icons = {
+        pending: 'fas fa-clock',
+        'in-transit': 'fas fa-truck',
+        delayed: 'fas fa-exclamation-triangle',
+        delivered: 'fas fa-check-circle',
+        cancelled: 'fas fa-times-circle',
+        assigned: 'fas fa-user-check'
+    };
+    return icons[status] || 'fas fa-circle';
+};
+
+const formatStatus = (status) => {
+    return status
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const getCustomerInitials = (name) => {
+    if (!name) return 'C';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+const getDriverInitials = (name) => {
+    if (!name) return 'D';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+const formatAddress = (info) => {
+    if (!info) return 'Address not available';
+
+    const lat = parseFloat(info.latitude);
+    const lng = parseFloat(info.longitude);
+
+    if (lat && lng) {
+        return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    return 'Address not available';
+};
+
+const formatDateTime = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+const formatRelativeTime = (timestamp) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+};
+
+const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+};
+
+const goBack = () => {
+    router.go(-1);
+};
+
+const contactCustomer = () => {
+    if (jobDetails.value?.pickupInfo?.phone) {
+        window.open(`tel:${jobDetails.value.pickupInfo.phone}`);
+    }
+};
+
+const callDriver = () => {
+    if (jobDetails.value?.driverInfo?.phone) {
+        window.open(`tel:${jobDetails.value.driverInfo.phone}`);
+    }
+};
+
+const messageDriver = () => {
+    console.log('Message driver:', jobDetails.value?.driverInfo?.name);
+};
+
+// Lifecycle hooks
+onMounted(async () => {
+    await fetchJobDetails();
+});
+
+onUnmounted(() => {
+    stopLiveTracking();
+    if (map.value) {
+        map.value.remove();
+    }
+});
 </script>
 
 <style scoped>
-/* Main Container */
-.job-tracking-container {
-    min-height: 100vh;
-    /* background-color: #f8f9fa; */
-}
-
-/* Header */
-.tracking-header {
-    background: linear-gradient(135deg, #720707 0%, #8b0000 100%);
-    /* color: white; */
-    padding: 1.5rem 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    /* color: white; */
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.job-title h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin: 0 0 0.25rem 0;
-}
-
-.job-title p {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin: 0;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.status-badge.status-active {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.status-badge.status-pending {
-    background: #ffc107;
-    color: #212529;
-}
-
-.status-badge.status-completed {
-    background: #28a745;
-}
-
-.status-badge.status-delayed {
-    background: #dc3545;
-}
-
-.refresh-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    /* color: white; */
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.refresh-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.refresh-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Main Content */
-.tracking-main {
-    display: flex;
-    max-width: 1400px;
-    margin: 0 auto;
-    gap: 2rem;
-    padding: 2rem;
-}
-
-/* Map Section */
-.map-section {
-    flex: 2;
-    position: relative;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    height: 600px;
-}
-
-.tracking-map {
-    width: 100%;
-    height: 100%;
-}
-
-.map-controls {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 1000;
-}
-
-.map-control {
-    width: 40px;
-    height: 40px;
-    background: white;
-    border: none;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #2c3e50;
-    transition: all 0.3s ease;
-}
-
-.map-control:hover {
-    background: #720707;
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* Live Stats Overlay */
-.live-stats {
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    display: flex;
-    gap: 1rem;
-    z-index: 1000;
-}
-
-.stat-item {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 120px;
-}
-
-.stat-item i {
-    color: #720707;
-    font-size: 1.2rem;
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-/* Info Panel */
-.info-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.panel-section {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 1.5rem 0;
-}
-
-.section-title i {
-    color: #720707;
-}
-
-/* Progress Timeline */
-.progress-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.timeline-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.timeline-item.completed {
-    background: #f8f9fa;
-    border-left: 4px solid #28a745;
-}
-
-.timeline-item.active {
-    background: #f8f9fa;
-    border-left: 4px solid #720707;
-}
-
-.timeline-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    color: white;
-    background: #6c757d;
-}
-
-.timeline-item.completed .timeline-icon {
-    background: #28a745;
-}
-
-.timeline-item.active .timeline-icon {
-    background: #720707;
-}
-
-.timeline-content {
-    flex: 1;
-}
-
-.timeline-title {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-.timeline-location {
-    color: #6c757d;
-    margin-bottom: 0.25rem;
-}
-
-.timeline-time {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-.timeline-status {
-    display: flex;
-    align-items: center;
-}
-
-.timeline-status i.completed {
-    color: #28a745;
-    font-size: 1.2rem;
-}
-
-.timeline-status i.pending {
-    color: #ffc107;
-    font-size: 1.2rem;
-}
-
-.progress-indicator {
-    background: #720707;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.timeline-connector {
-    width: 2px;
-    height: 20px;
-    background: #e9ecef;
-    margin-left: 20px;
-    margin-top: -0.5rem;
-    margin-bottom: -0.5rem;
-}
-
-.timeline-connector.active {
-    background: #720707;
-}
-
-.timeline-connector.completed {
-    background: #28a745;
-}
-
-/* Driver Card */
-.driver-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.driver-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    overflow: hidden;
-}
-
-.driver-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.driver-details {
-    flex: 1;
-}
-
-.driver-name {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-.driver-phone {
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-}
-
-.driver-rating {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.driver-rating i {
-    color: #e9ecef;
-    font-size: 0.8rem;
-}
-
-.driver-rating i.active {
-    color: #ffc107;
-}
-
-.driver-rating span {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-left: 0.25rem;
-}
-
-.driver-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.action-btn.call {
-    background: #28a745;
-    color: white;
-}
-
-.action-btn.call:hover {
-    background: #218838;
-}
-
-.action-btn.message {
-    background: #17a2b8;
-    color: white;
-}
-
-.action-btn.message:hover {
-    background: #138496;
-}
-
-/* Vehicle Info */
-.vehicle-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.vehicle-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #6c757d;
-}
-
-.vehicle-item i {
-    width: 20px;
-    color: #720707;
-}
-
-/* Customer Info */
-.customer-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.info-item label {
-    font-weight: 500;
-    color: #6c757d;
-}
-
-.info-item span {
-    color: #2c3e50;
-}
-
-/* Last Update */
-.last-update {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-
-.last-update i {
-    color: #720707;
-}
-
-/* Loading and Error States */
-.loading-state,
-.error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    text-align: center;
-    color: #6c757d;
-}
-
-.loading-state i,
-.error-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.error-state {
-    color: #dc3545;
-}
-
-.retry-btn {
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
-    background: #720707;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.retry-btn:hover {
-    background: #8b0000;
-}
-
-/* Map Popup */
-.map-popup {
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-.map-popup strong {
-    color: #2c3e50;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .tracking-main {
-        flex-direction: column;
-    }
-
-    .map-section {
-        height: 400px;
-    }
-
-    .live-stats {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .stat-item {
-        min-width: auto;
-    }
-}
-
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-
-    .header-left {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .tracking-main {
-        padding: 1rem;
-        gap: 1rem;
-    }
-
-    .driver-card {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .driver-actions {
-        flex-direction: row;
-        justify-content: center;
-    }
-
-    .live-stats {
-        position: relative;
-        bottom: auto;
-        left: auto;
-        margin-top: 1rem;
-    }
-}
+@import './JobDetails.css';
 </style>
