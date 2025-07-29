@@ -52,10 +52,6 @@
                             </span>
                         </div>
                         <div class="header-actions">
-                            <button @click="toggleLiveTracking" class="track-btn" :class="{ active: isLiveTracking }">
-                                <i :class="['fas', isLiveTracking ? 'fa-pause' : 'fa-play']"></i>
-                                {{ isLiveTracking ? 'Pause Tracking' : 'Start Live Tracking' }}
-                            </button>
                             <button @click="contactCustomer" class="contact-btn">
                                 <i class="fas fa-phone"></i>
                                 Contact
@@ -410,7 +406,6 @@ const isRefreshingLocation = ref(false);
 // Map related
 const map = ref(null);
 const mapStyle = ref('streets-v2');
-const driverLocation = ref(null);
 const packageLocation = ref(null);
 const routeDistance = ref(null);
 const routeDuration = ref(null);
@@ -418,7 +413,6 @@ const routeDuration = ref(null);
 // Map markers
 const pickupMarker = ref(null);
 const deliveryMarker = ref(null);
-const driverMarker = ref(null);
 const packageMarker = ref(null);
 
 // Tracking interval
@@ -428,20 +422,49 @@ const trackingInterval = ref(null);
 const mapTilerKey = import.meta.env.VITE_MAPTILER_API_KEY || "pj6JP8mcZoHH4whFRfMA";
 const orsKey = import.meta.env.VITE_ORS_API_KEY;
 
-// Helper function to calculate Haversine distance (in kilometers)
-const haversineDistance = (lat1, lon1, lat2, lon2) => {
-    const toRad = (value) => (value * Math.PI) / 180;
+// Helper function to calculate distance using ORS API
+const calculateORSDistance = async (startLat, startLng, endLat, endLng) => {
+    if (!orsKey || isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) {
+        console.error('Invalid parameters for ORS distance calculation:', { startLat, startLng, endLat, endLng });
+        return null;
+    }
 
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-
-    return distance; // Distance in kilometers
+    try {
+        const requestBody = {
+            coordinates: [[startLng, startLat], [endLng, endLat]],
+            profile: 'driving-car',
+            format: 'geojson',
+            instructions: false
+        };
+        const response = await fetch(
+            'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': orsKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            }
+        );
+        if (response.ok) {
+            const data = await response.json();
+            console.log('ORS distance response:', data);
+            if (data.features && data.features.length > 0 && data.features[0].properties?.summary) {
+                return (data.features[0].properties.summary.distance / 1000).toFixed(1); // Distance in km
+            } else {
+                console.error('Invalid ORS response data:', data);
+                return null;
+            }
+        } else {
+            const errorData = await response.json();
+            console.error('ORS API request failed:', response.status, errorData);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error calculating ORS distance:', error);
+        return null;
+    }
 };
 
 // Computed properties
@@ -449,7 +472,7 @@ const jobProgress = computed(() => {
     console.log('Computing jobProgress:', {
         hasJobDetails: !!jobDetails.value,
         hasRouteDistance: !!routeDistance.value,
-        hasDriverLocation: !!driverLocation.value,
+        hasPackageLocation: !!packageLocation.value,
         jobStatus: jobDetails.value?.status
     });
 
@@ -469,8 +492,8 @@ const jobProgress = computed(() => {
         'cancelled': 0
     };
     const status = jobDetails.value.status || 'pending';
-    if (!routeDistance.value || !driverLocation.value) {
-        console.log('Missing routeDistance or driverLocation, using status-based progress:', status);
+    if (!routeDistance.value || !packageLocation.value) {
+        console.log('Missing routeDistance or packageLocation, using status-based progress:', status);
         const fallbackProgress = progressMap[status] || 10; // Default to 10% for unknown statuses
         console.log('Fallback progress:', fallbackProgress);
         return fallbackProgress;
@@ -480,42 +503,43 @@ const jobProgress = computed(() => {
     const deliveryLat = parseFloat(jobDetails.value.dropoffInfo.latitude);
     const deliveryLng = parseFloat(jobDetails.value.dropoffInfo.longitude);
 
-    // Get driver coordinates, fallback to pickup if driverLocation is unavailable
-    let driverLat = driverLocation.value?.latitude;
-    let driverLng = driverLocation.value?.longitude;
-    if (!driverLat || !driverLng) {
-        console.log('No driver location, using pickup coordinates as fallback');
-        driverLat = parseFloat(jobDetails.value.pickupInfo.latitude);
-        driverLng = parseFloat(jobDetails.value.pickupInfo.longitude);
-    }
+    // Get package (current) coordinates
+    const packageLat = parseFloat(packageLocation.value.latitude);
+    const packageLng = parseFloat(packageLocation.value.longitude);
 
     // Validate coordinates
-    if (isNaN(deliveryLat) || isNaN(deliveryLng) || isNaN(driverLat) || isNaN(driverLng)) {
+    if (isNaN(deliveryLat) || isNaN(deliveryLng) || isNaN(packageLat) || isNaN(packageLng)) {
         console.error('Invalid coordinates for distance calculation:', {
             deliveryLat,
             deliveryLng,
-            driverLat,
-            driverLng
+            packageLat,
+            packageLng
         });
         return progressMap[status] || 10;
     }
 
-    // Calculate total distance if routeDistance is unavailable
-    let totalDistance = parseFloat(routeDistance.value);
-    if (isNaN(totalDistance) || totalDistance === 0) {
-        console.log('Invalid or missing routeDistance, calculating Haversine distance between pickup and delivery');
-        const pickupLat = parseFloat(jobDetails.value.pickupInfo.latitude);
-        const pickupLng = parseFloat(jobDetails.value.pickupInfo.longitude);
-        totalDistance = haversineDistance(pickupLat, pickupLng, deliveryLat, deliveryLng);
-        console.log('Fallback total distance:', totalDistance);
-    }
-
-    // Calculate remaining distance
-    const remainingDistance = haversineDistance(driverLat, driverLng, deliveryLat, deliveryLng);
-    console.log('Distance data:', { remainingDistance, totalDistance });
-
+    // Use totalDistance from routeDistance
+    const totalDistance = parseFloat(routeDistance.value);
     if (isNaN(totalDistance) || totalDistance === 0) {
         console.error('Invalid total route distance:', totalDistance);
+        return progressMap[status] || 10;
+    }
+
+    // Calculate remaining distance using ORS API
+    let remainingDistance = null;
+    const distancePromise = calculateORSDistance(packageLat, packageLng, deliveryLat, deliveryLng);
+    distancePromise.then((distance) => {
+        if (distance !== null) {
+            remainingDistance = parseFloat(distance);
+            console.log('Remaining distance calculated:', remainingDistance);
+        } else {
+            console.log('Failed to calculate remaining distance, using status-based progress');
+        }
+    });
+
+    // If remainingDistance is null, fallback to status-based progress
+    if (remainingDistance === null) {
+        console.log('No valid remaining distance, using status-based progress:', status);
         return progressMap[status] || 10;
     }
 
@@ -740,6 +764,7 @@ const calculateRoute = async () => {
                 routeDuration.value = formatDuration(route.properties.summary.duration);
                 console.log('Route calculated:', { routeDistance: routeDistance.value, routeDuration: routeDuration.value });
                 displayRouteOnMap(route.geometry);
+                await nextTick(); // Ensure UI updates after route calculation
             } else {
                 console.error('Invalid route data:', data);
                 errorMessage.value = 'Failed to calculate route: Invalid data returned.';
@@ -800,10 +825,8 @@ const toggleLiveTracking = () => {
 };
 
 const startLiveTracking = () => {
-    fetchDriverLocation();
     fetchJobDetails(); // Refresh job details to update package location
     trackingInterval.value = setInterval(() => {
-        fetchDriverLocation();
         fetchJobDetails();
     }, 30000); // Update every 30 seconds
 };
@@ -812,79 +835,6 @@ const stopLiveTracking = () => {
     if (trackingInterval.value) {
         clearInterval(trackingInterval.value);
         trackingInterval.value = null;
-    }
-};
-
-const fetchDriverLocation = async () => {
-    if (!jobDetails.value?._id) return;
-
-    try {
-        const response = await apiClient.get(`/coordinate/getAllCoord/${jobDetails.value._id}`);
-        console.log('fetchDriverLocation response:', response.data);
-        if (response.data && response.data.length > 0) {
-            const latestCoord = response.data[response.data.length - 1];
-            if (latestCoord.latitude && latestCoord.longitude) {
-                driverLocation.value = {
-                    latitude: parseFloat(latestCoord.latitude),
-                    longitude: parseFloat(latestCoord.longitude),
-                    timestamp: latestCoord.timestamp || new Date(),
-                    address: null
-                };
-                console.log('Driver location updated:', driverLocation.value);
-                updateDriverMarker();
-                await reverseGeocode(driverLocation.value.latitude, driverLocation.value.longitude);
-                await nextTick(); // Ensure UI updates after driver location fetch
-            } else {
-                console.log('No valid coordinates in latestCoord:', latestCoord);
-            }
-        } else {
-            console.log('No driver coordinates found');
-        }
-    } catch (error) {
-        console.error('Error fetching driver location:', error);
-    }
-};
-
-const updateDriverMarker = () => {
-    if (!map.value || !driverLocation.value) return;
-
-    const coords = [driverLocation.value.longitude, driverLocation.value.latitude];
-
-    if (driverMarker.value) {
-        driverMarker.value.remove();
-    }
-
-    const driverEl = document.createElement('div');
-    driverEl.className = 'custom-marker driver';
-    driverEl.innerHTML = '<i class="fas fa-truck"></i>';
-
-    driverMarker.value = new maplibregl.Marker(driverEl)
-        .setLngLat(coords)
-        .setPopup(new maplibregl.Popup().setHTML(`
-            <div class="marker-popup">
-                <h4>Driver Location</h4>
-                <p><strong>${jobDetails.value.driverInfo?.name || 'Driver'}</strong></p>
-                <p>Last updated: ${formatRelativeTime(driverLocation.value.timestamp)}</p>
-                <p>${driverLocation.value.address || 'Fetching address...'}</p>
-            </div>
-        `))
-        .addTo(map.value);
-};
-
-const reverseGeocode = async (lat, lng) => {
-    try {
-        const response = await fetch(
-            `https://api.maptiler.com/geocoding/${lat},${lng}.json?key=${mapTilerKey}`
-        );
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.features && data.features.length > 0) {
-                driverLocation.value.address = data.features[0].place_name;
-            }
-        }
-    } catch (error) {
-        console.error('Error reverse geocoding driver location:', error);
     }
 };
 
@@ -909,7 +859,6 @@ const reverseGeocodePackage = async () => {
 
 const refreshLocation = async () => {
     isRefreshingLocation.value = true;
-    await fetchDriverLocation();
     await fetchJobDetails(); // Refresh package location
     setTimeout(() => {
         isRefreshingLocation.value = false;
@@ -932,9 +881,6 @@ const centerMap = () => {
     bounds.extend(pickupCoords);
     bounds.extend(deliveryCoords);
 
-    if (driverLocation.value) {
-        bounds.extend([driverLocation.value.longitude, driverLocation.value.latitude]);
-    }
     if (packageLocation.value) {
         bounds.extend([packageLocation.value.longitude, packageLocation.value.latitude]);
     }
@@ -954,9 +900,6 @@ const toggleMapStyle = () => {
 
     map.value.once('styledata', () => {
         addMapMarkers();
-        if (driverLocation.value) {
-            updateDriverMarker();
-        }
         if (packageLocation.value) {
             updatePackageMarker();
         }
@@ -1078,6 +1021,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+
 @import './JobDetails.css';
 
 /* Add styles for package marker */

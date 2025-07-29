@@ -755,7 +755,7 @@ const createNewJob = async () => {
         const newJob = response.data;
         createJobSuccess.value = `Job ${newJob._id} created successfully and assigned to ${selectedDriver.firstName} ${selectedDriver.lastName}`;
         setTimeout(() => {
-            router.push('/home');
+            router.push('/');
         }, 2000);
     } catch (error) {
         console.error('Error creating job:', {
@@ -849,7 +849,7 @@ const cancel = () => {
         dropoffMarker.value.remove();
         dropoffMarker.value = null;
     }
-    router.push('/home');
+    router.push('/');
 };
 
 onMounted(async () => {

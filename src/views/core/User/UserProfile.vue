@@ -59,7 +59,7 @@
                             </div>
                         </div>
                         <div class="profile-info">
-                            <h2 class="user-name">{{ user.firstName }} {{ user.lastName }}</h2>
+                            <h2 class="user-name" style="color: white;">{{ user.firstName }} {{ user.lastName }}</h2>
                             <div class="user-role">
                                 <span :class="['role-badge', user.role]">
                                     <i :class="getRoleIcon(user.role)"></i>
