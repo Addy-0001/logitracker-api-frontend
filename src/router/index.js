@@ -4,7 +4,6 @@ import LoginView from '@/views/auth/Login/LoginView.vue';
 import SignupView from '@/views/auth/Register/SignupView.vue';
 import ProfileView from '@/views/auth/Profile/ProfileView.vue';
 import Shipment from '@/views/core/User/User.vue';
-import Tracking from '@/views/core/Tracking/Tracking.vue';
 import { useAuthStore } from '@/stores/auth';
 import JobDetails from '@/views/core/JobDetails/JobDetails.vue';
 import CreateJobView from '@/views/core/Home/CreateJobView.vue';
@@ -74,12 +73,6 @@ const router = createRouter({
       path: '/users/:id',
       name: 'user-details',
       component: UserProfile,
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/tracking',
-      name: 'tracking',
-      component: Tracking,
       meta: { requiresAuth: true, requiresAdmin: true },
     },
   ],

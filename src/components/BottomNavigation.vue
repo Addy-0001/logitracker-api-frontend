@@ -33,11 +33,6 @@ export default {
                     icon: 'fas fa-users'
                 },
                 {
-                    name: 'Tracking',
-                    path: '/tracking',
-                    icon: 'fas fa-map-marker-alt'
-                },
-                {
                     name: 'Reports',
                     path: '/reports',
                     icon: 'fas fa-chart-bar'

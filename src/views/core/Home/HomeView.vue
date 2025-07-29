@@ -53,10 +53,6 @@
                     <div class="card-content">
                         <h3>{{ summaryStats.inTransit }}</h3>
                         <p>In Transit</p>
-                        <div class="trend-indicator up">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+12%</span>
-                        </div>
                     </div>
                 </div>
 
@@ -68,10 +64,6 @@
                     <div class="card-content">
                         <h3>{{ summaryStats.pending }}</h3>
                         <p>Pending</p>
-                        <div class="trend-indicator down">
-                            <i class="fas fa-arrow-down"></i>
-                            <span>-5%</span>
-                        </div>
                     </div>
                 </div>
 
@@ -83,10 +75,6 @@
                     <div class="card-content">
                         <h3>{{ summaryStats.urgent }}</h3>
                         <p>Urgent</p>
-                        <div class="trend-indicator neutral">
-                            <i class="fas fa-minus"></i>
-                            <span>0%</span>
-                        </div>
                     </div>
                 </div>
 
@@ -98,10 +86,6 @@
                     <div class="card-content">
                         <h3>{{ summaryStats.deliveredToday }}</h3>
                         <p>Delivered Today</p>
-                        <div class="trend-indicator up">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+8%</span>
-                        </div>
                     </div>
                 </div>
             </div>
