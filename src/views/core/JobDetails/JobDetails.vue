@@ -1,4 +1,3 @@
-
 <template>
     <div class="job-details-container">
         <!-- Loading State -->
@@ -329,6 +328,10 @@
                                         <div class="legend-marker delivery"></div>
                                         <span>Delivery Location</span>
                                     </div>
+                                    <div class="legend-item" v-if="packageLocation">
+                                        <div class="legend-marker package"></div>
+                                        <span>Package Location</span>
+                                    </div>
                                     <div class="legend-item" v-if="driverLocation">
                                         <div class="legend-marker driver"></div>
                                         <span>Driver Location</span>
@@ -340,20 +343,41 @@
                                 </div>
                             </div>
 
-                            <!-- Driver Location Info -->
-                            <div v-if="driverLocation" class="driver-location-info">
-                                <div class="location-header">
-                                    <i class="fas fa-truck"></i>
-                                    <span>Driver Location</span>
-                                    <div class="last-updated">
-                                        Updated {{ formatRelativeTime(driverLocation.timestamp) }}
+                            <!-- Location Info -->
+                            <div v-if="packageLocation || driverLocation" class="location-info">
+                                <!-- Package Location -->
+                                <div v-if="packageLocation" class="location-section">
+                                    <div class="location-header">
+                                        <i class="fas fa-box"></i>
+                                        <span>Package Location</span>
+                                        <div class="last-updated">
+                                            Updated {{ formatRelativeTime(jobDetails.updatedAt) }}
+                                        </div>
+                                    </div>
+                                    <div class="location-details">
+                                        <p>{{ packageLocation.address || 'Fetching address...' }}</p>
+                                        <div class="location-coords">
+                                            {{ packageLocation.latitude?.toFixed(6) }}, {{
+                                                packageLocation.longitude?.toFixed(6) }}
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="location-details">
-                                    <p>{{ driverLocation.address || 'Fetching address...' }}</p>
-                                    <div class="location-coords">
-                                        {{ driverLocation.latitude?.toFixed(6) }}, {{
-                                            driverLocation.longitude?.toFixed(6) }}
+
+                                <!-- Driver Location -->
+                                <div v-if="driverLocation" class="location-section">
+                                    <div class="location-header">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Driver Location</span>
+                                        <div class="last-updated">
+                                            Updated {{ formatRelativeTime(driverLocation.timestamp) }}
+                                        </div>
+                                    </div>
+                                    <div class="location-details">
+                                        <p>{{ driverLocation.address || 'Fetching address...' }}</p>
+                                        <div class="location-coords">
+                                            {{ driverLocation.latitude?.toFixed(6) }}, {{
+                                                driverLocation.longitude?.toFixed(6) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -397,6 +421,7 @@ const isRefreshingLocation = ref(false);
 const map = ref(null);
 const mapStyle = ref('streets-v2');
 const driverLocation = ref(null);
+const packageLocation = ref(null);
 const routeDistance = ref(null);
 const routeDuration = ref(null);
 
@@ -404,6 +429,7 @@ const routeDuration = ref(null);
 const pickupMarker = ref(null);
 const deliveryMarker = ref(null);
 const driverMarker = ref(null);
+const packageMarker = ref(null);
 
 // Tracking interval
 const trackingInterval = ref(null);
@@ -441,8 +467,18 @@ const fetchJobDetails = async () => {
         if (response.data && response.data.success && response.data.job) {
             jobDetails.value = response.data.job;
             console.log('Job details fetched:', jobDetails.value); // Debug log
+            if (jobDetails.value.currentCoords) {
+                packageLocation.value = {
+                    latitude: parseFloat(jobDetails.value.currentCoords.latitude),
+                    longitude: parseFloat(jobDetails.value.currentCoords.longitude),
+                    address: null
+                };
+            }
             await nextTick(); // Ensure DOM is updated
             await initializeMap();
+            if (packageLocation.value) {
+                await reverseGeocodePackage();
+            }
             await calculateRoute();
         } else {
             throw new Error('Job not found');
@@ -483,6 +519,9 @@ const initializeMap = async () => {
         map.value.on('load', () => {
             console.log('Map loaded successfully');
             addMapMarkers();
+            if (packageLocation.value) {
+                updatePackageMarker();
+            }
             isMapLoading.value = false;
         });
 
@@ -550,6 +589,31 @@ const addMapMarkers = () => {
             `))
             .addTo(map.value);
     }
+};
+
+const updatePackageMarker = () => {
+    if (!map.value || !packageLocation.value) return;
+
+    const coords = [packageLocation.value.longitude, packageLocation.value.latitude];
+
+    if (packageMarker.value) {
+        packageMarker.value.remove();
+    }
+
+    const packageEl = document.createElement('div');
+    packageEl.className = 'custom-marker package';
+    packageEl.innerHTML = '<i class="fas fa-box"></i>';
+
+    packageMarker.value = new maplibregl.Marker(packageEl)
+        .setLngLat(coords)
+        .setPopup(new maplibregl.Popup().setHTML(`
+            <div class="marker-popup">
+                <h4>Package Location</h4>
+                <p>Last updated: ${formatRelativeTime(jobDetails.value.updatedAt)}</p>
+                <p>${packageLocation.value.address || 'Fetching address...'}</p>
+            </div>
+        `))
+        .addTo(map.value);
 };
 
 const calculateRoute = async () => {
@@ -663,7 +727,11 @@ const toggleLiveTracking = () => {
 
 const startLiveTracking = () => {
     fetchDriverLocation();
-    trackingInterval.value = setInterval(fetchDriverLocation, 30000); // Update every 30 seconds
+    fetchJobDetails(); // Refresh job details to update package location
+    trackingInterval.value = setInterval(() => {
+        fetchDriverLocation();
+        fetchJobDetails();
+    }, 30000); // Update every 30 seconds
 };
 
 const stopLiveTracking = () => {
@@ -738,13 +806,33 @@ const reverseGeocode = async (lat, lng) => {
             }
         }
     } catch (error) {
-        console.error('Error reverse geocoding:', error);
+        console.error('Error reverse geocoding driver location:', error);
+    }
+};
+
+const reverseGeocodePackage = async () => {
+    if (!packageLocation.value) return;
+
+    try {
+        const response = await fetch(
+            `https://api.maptiler.com/geocoding/${packageLocation.value.latitude},${packageLocation.value.longitude}.json?key=${mapTilerKey}`
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+                packageLocation.value.address = data.features[0].place_name;
+            }
+        }
+    } catch (error) {
+        console.error('Error reverse geocoding package location:', error);
     }
 };
 
 const refreshLocation = async () => {
     isRefreshingLocation.value = true;
     await fetchDriverLocation();
+    await fetchJobDetails(); // Refresh package location
     setTimeout(() => {
         isRefreshingLocation.value = false;
     }, 1000);
@@ -769,6 +857,9 @@ const centerMap = () => {
     if (driverLocation.value) {
         bounds.extend([driverLocation.value.longitude, driverLocation.value.latitude]);
     }
+    if (packageLocation.value) {
+        bounds.extend([packageLocation.value.longitude, packageLocation.value.latitude]);
+    }
 
     map.value.fitBounds(bounds, { padding: 50 });
 };
@@ -787,6 +878,9 @@ const toggleMapStyle = () => {
         addMapMarkers();
         if (driverLocation.value) {
             updateDriverMarker();
+        }
+        if (packageLocation.value) {
+            updatePackageMarker();
         }
         calculateRoute();
     });
@@ -907,4 +1001,30 @@ onUnmounted(() => {
 
 <style scoped>
 @import './JobDetails.css';
+
+/* Add styles for package marker */
+.custom-marker.package {
+    color: #ff9900;
+    /* Orange for package marker */
+    font-size: 24px;
+}
+
+.legend-marker.package {
+    background-color: #ff9900;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.location-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.location-section {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+}
 </style>
