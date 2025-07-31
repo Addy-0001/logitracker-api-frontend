@@ -19,4 +19,12 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@maptiler/sdk', 'leaflet'],
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.js'],
+    deps: {
+      inline: ['@testing-library/vue'],
+    },
+  }
 });
