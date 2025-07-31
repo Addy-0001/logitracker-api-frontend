@@ -3,15 +3,14 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    vueDevTools(),
-  ],
+    mode !== 'test' ? vueDevTools() : undefined, // Exclude in test mode
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // Use the package's main entry point instead of a specific file
       '@maptiler/sdk': '@maptiler/sdk',
       'leaflet': fileURLToPath(new URL('./node_modules/leaflet/dist/leaflet.js', import.meta.url)),
     },
@@ -26,5 +25,5 @@ export default defineConfig({
     deps: {
       inline: ['@testing-library/vue'],
     },
-  }
-});
+  },
+}));
