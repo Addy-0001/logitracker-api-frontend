@@ -46,10 +46,21 @@
                     </div>
                     <div class="header-right">
                         <div class="status-section">
-                            <span :class="['status-badge', jobDetails.status]">
-                                <i :class="getStatusIcon(jobDetails.status)"></i>
-                                {{ formatStatus(jobDetails.status) }}
-                            </span>
+                            <div class="status-dropdown">
+                                <button @click="showStatUpdateDropdown" :class="['status-badge', jobDetails.status]">
+                                    <i :class="getStatusIcon(jobDetails.status)"></i>
+                                    {{ formatStatus(jobDetails.status) }}
+                                </button>
+                                <div v-if="showDropdown" class="dropdown-menu">
+                                    <button v-for="status in availableStatuses" :key="status"
+                                        @click="updateJobStatus(status)"
+                                        :class="['dropdown-item', { active: jobDetails.status === status }]"
+                                        :disabled="jobDetails.status === status">
+                                        <i :class="getStatusIcon(status)"></i>
+                                        {{ formatStatus(status) }}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="header-actions">
                             <button @click="contactCustomer" class="contact-btn">
@@ -997,6 +1008,33 @@ const goBack = () => {
     router.go(-1);
 };
 
+const showDropdown = ref(false);
+const availableStatuses = ['pending', 'in-transit', 'delayed', 'delivered', 'cancelled'];
+
+const showStatUpdateDropdown = () => {
+    showDropdown.value = !showDropdown.value;
+};
+
+const updateJobStatus = async (newStatus) => {
+    try {
+        const jobId = route.params.id;
+        console.log(jobId)
+        const response = await apiClient.patch(`job/${jobId}/status`, { status: newStatus });
+        if (response.data) {
+            jobDetails.value = response.data.job;
+            showDropdown.value = false;
+            await nextTick();
+            await calculateRoute(); // Recalculate route if needed
+        } else {
+            throw new Error('Failed to update job status');
+        }
+    } catch (error) {
+        console.error('Error updating job status:', error);
+        errorMessage.value = error.response?.data?.message || 'Failed to update job status';
+        alert('Failed to update job status. Please try again.');
+    }
+};
+
 const contactCustomer = () => {
     if (jobDetails.value?.pickupInfo?.phone) {
         window.open(`tel:${jobDetails.value.pickupInfo.phone}`);
@@ -1070,5 +1108,52 @@ onUnmounted(() => {
     background: rgba(255, 255, 255, 0.9);
     padding: 10px;
     border-radius: 5px;
+}
+
+/* Status Dropdown Styles */
+.status-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover:not(:disabled) {
+    background-color: #f5f5f5;
+}
+
+.dropdown-item.active {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.dropdown-item:disabled {
+    color: #999;
+    cursor: not-allowed;
 }
 </style>
