@@ -57,6 +57,12 @@
                                 Contact
                             </button>
                         </div>
+                        <div class="header-actions" style="margin-top: 15px;">
+                            <button @click="generateReport" class="status-badge delayed">
+                                <i class="fas fa-file"></i>
+                                Generate Report
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -997,6 +1003,23 @@ const contactCustomer = () => {
     }
 };
 
+
+const generateReport = async () => {
+    try {
+        const jobId = route.params.id;
+        const response = await apiClient.get(`/job/generate-pdf/${jobId}`, {
+            jobId: jobId
+        }).then(() => {
+            router.push('/reports')
+        });
+
+        alert('Report generated successfully! Redirecting to reports page now.');
+    } catch (error) {
+        console.error('Error generating report:', error);
+        alert('An error occurred while generating the report. Please try again later.');
+    }
+}
+
 const callDriver = () => {
     if (jobDetails.value?.driverInfo?.phone) {
         window.open(`tel:${jobDetails.value.driverInfo.phone}`);
@@ -1021,7 +1044,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-
 @import './JobDetails.css';
 
 /* Add styles for package marker */
