@@ -700,7 +700,8 @@ const saveUser = async () => {
             userFormSuccess.value = updateResponse.data.message || 'User updated successfully';
         } else {
             userData.password = userForm.value.password;
-            const createResponse = await publicApiClient.post('/auth/signup', userData);
+            userData.confirmPassword = userForm.value.confirmPassword;
+            const createResponse = await apiClient.post('/auth/signup', userData);
             const newUserId = createResponse.data.user?._id;
 
             if (userForm.value.avatarFile && newUserId) {
